@@ -68,5 +68,3 @@ For further information see the in-app help.
 ## Contact details
 
 Feel free to raise issues you have here - I'd be interested to know, and try and find a fix, but this is an exercise I'm doing to try and get my LLM to teach me how to code, and it's going slowly. Thanks for your patience.
-
-Questions, comments, feedback and suggestions for future features always welcome, please contact me at tcowperapps@gmail.com.
