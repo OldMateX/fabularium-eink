@@ -61,7 +61,7 @@ For further information see the in-app help.
 6. Install everything the project needs in one shot:
   & "C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat" "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1" "ndk;25.2.9519653"
 
-# 7. Rebuild:
+7. Rebuild:
   cd C:\Users\lenovo\fabularium-eink-main
   .\gradlew.bat assembleDebug   
  
