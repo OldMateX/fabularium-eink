@@ -40,7 +40,7 @@ For further information see the in-app help.
 4. The project should open in Android Studio - if prompted, choose to recreate any missing gradle wrapper files, etc. 
 5. Build it within Android Studio as you would any other app (Build=>Make project, Ctrl+F9, etc.).
 
-*Using PowerShell (as Administrator) and the Android SDK*
+*In PowerShell (as Administrator) using the Android SDK*
 
 1. Download cmdline-tools directly (155 MB):
   Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-15859902_latest.zip" -OutFile "$env:USERPROFILE\Downloads\commandlinetools-win-15859902_latest.zip"
