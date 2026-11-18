@@ -44,23 +44,17 @@ For further information see the in-app help.
 
 1. Download cmdline-tools directly (155 MB):
   Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-15859902_latest.zip" -OutFile "$env:USERPROFILE\Downloads\commandlinetools-win-15859902_latest.zip"
-
 2. Extract it into the SDK:
   Expand-Archive "$env:USERPROFILE\Downloads\commandlinetools-win-15859902_latest.zip" -DestinationPath C:\Android\sdk\cmdline-tools
-
 3. Rename the inner folder to "latest":
   Rename-Item C:\Android\sdk\cmdline-tools\cmdline-tools latest
-
 4. Verify:
   Test-Path C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat
   *Must print True before continuing*
-
 5. Accept ALL licenses (press 'y' for each prompt):
   & "C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat" --licenses
-
 6. Install everything the project needs in one shot:
   & "C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat" "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1" "ndk;25.2.9519653"
-
 7. Rebuild:
   cd C:\Users\lenovo\fabularium-eink-main
   .\gradlew.bat assembleDebug   
