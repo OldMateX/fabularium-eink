@@ -6,8 +6,11 @@ If you already had Fabularium installed, use *Reset config files* from the game 
 
 ---
 
+I've forked the hard work of Aex12 to add some tweaks for my own Eink usability. Firstly I've tweaked the metadata import to have some bulk options, as well as fixed some weird display issues where the html code appeared instead of *&*, *'*, *"* marks and line breaks not appearing in the imported metadata. The rest is just usability tweaks for myself:
+- Page Up / Down using volume buttons
+- An always on Command Keyboard
 
-This is the source code for the Fabularium app at https://play.google.com/store/apps/details?id=com.luxlunae.fabularium.
+---
 
 ## About
 
@@ -31,12 +34,37 @@ For further information see the in-app help.
 
 *Using Android Studio:*
 
-1. Clone the repository to your local machine (git clone https://github.com/tccowper/fabularium.git).
+1. Clone the repository to your local machine (git clone https://github3.com/tccowper/fabularium.git).
 2. Open a recent version of Android Studio (e.g. 3.3.1). 
 3. Choose "Import project (Gradle, Eclipse ADT, etc.)" and, when prompted, select the root folder of the cloned repository. 
 4. The project should open in Android Studio - if prompted, choose to recreate any missing gradle wrapper files, etc. 
 5. Build it within Android Studio as you would any other app (Build=>Make project, Ctrl+F9, etc.).
 
+*In PowerShell (as Administrator) using the Android SDK*
+
+1. Download cmdline-tools directly (155 MB):
+  Invoke-WebRequest -Uri "https://dl.google.com/android/repository/commandlinetools-win-15859902_latest.zip" -OutFile "$env:USERPROFILE\Downloads\commandlinetools-win-15859902_latest.zip"
+
+2. Extract it into the SDK:
+  Expand-Archive "$env:USERPROFILE\Downloads\commandlinetools-win-15859902_latest.zip" -DestinationPath C:\Android\sdk\cmdline-tools
+
+3. Rename the inner folder to "latest":
+  Rename-Item C:\Android\sdk\cmdline-tools\cmdline-tools latest
+
+4. Verify:
+  Test-Path C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat
+  *Must print True before continuing*
+
+5. Accept ALL licenses (press 'y' for each prompt):
+  & "C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat" --licenses
+
+6. Install everything the project needs in one shot:
+  & "C:\Android\sdk\cmdline-tools\latest\bin\sdkmanager.bat" "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmake;3.22.1" "ndk;25.2.9519653"
+
+7. Rebuild:
+  cd C:\Users\lenovo\fabularium-eink-main
+  .\gradlew.bat assembleDebug   
+ 
 ## Contact details
 
-Questions, comments, feedback and suggestions for future features always welcome, please contact me at tcowperapps@gmail.com.
+Feel free to raise issues you have here - I'd be interested to know, and try and find a fix, but this is an exercise I'm doing to try and get my LLM to teach me how to code, and it's going slowly. Thanks for your patience.
