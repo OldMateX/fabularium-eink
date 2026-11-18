@@ -21,6 +21,8 @@ package com.luxlunae.fabularium;
 
 import android.content.Context;
 import android.content.res.Resources;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
@@ -28,10 +30,9 @@ import android.os.AsyncTask;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.widget.TextView;
-
+import com.luxlunae.fabularium.play.IFictionDbHelper;   
 import com.luxlunae.glk.GLKConstants;
 import com.luxlunae.glk.GLKUtils;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
@@ -48,13 +49,13 @@ public class AsyncLoaders {
     // Temporarily sets text view to display the default icon at its top
     // until the asynchronous task has completed (and then that
     // icon is overwritten with the loaded icon)
-    public static void loadBitmap(@NonNull String ifid, @NonNull TextView tv, @NonNull Context c, @NonNull Bitmap defaultIcon, int w, int h) {
+    public static void loadBitmap(@NonNull String ifid, @NonNull String filePath, @NonNull TextView tv, @NonNull Context c, @NonNull Bitmap defaultIcon, int w, int h) {
         if (cancelPotentialWork(ifid, tv)) {
             final BitmapWorkerTask task = new BitmapWorkerTask(c, tv, w, h);
             final AsyncDrawable asyncDrawable =
                     new AsyncDrawable(c.getResources(), defaultIcon, task);
             tv.setCompoundDrawablesWithIntrinsicBounds(null, asyncDrawable, null, null);
-            task.execute(ifid);
+            task.execute(ifid, filePath);
         }
     }
 
@@ -133,6 +134,7 @@ public class AsyncLoaders {
         private final int width;
         private final int height;
         private String ifid;
+        private String filePath;
 
         BitmapWorkerTask(@NonNull Context c, @NonNull TextView tv, int w, int h) {
             // Use a WeakReference to ensure the ImageView can be garbage collected
@@ -142,26 +144,40 @@ public class AsyncLoaders {
             height = h;
         }
 
-        // Decode image in background.
-        @Nullable
-        @Override
-        protected BitmapDrawable doInBackground(String... params) {
-            ifid = params[0];
-            Context c = mContext.get();
-            if (c != null) {
-                try {
-                    String path = GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + ifid + "/cover.png";
-                    File f = new File(path);
-                    if (f.exists()) {
-                        return new BitmapDrawable(c.getResources(), GLKUtils.getBitmapFromFile(path, width, height));
-                    }
-                } catch (@NonNull IOException | SecurityException e) {
-                    FabLogger.error("AsyncLoader: Cannot access game data directory. Check you have enabled file permissions and, if you have overridden the default paths, that Fabularium has read/write access to the path you have specified.");
-                    return null;
-                }
-            }
-            return null;
-        }
+		// Decode image in background.
+		@Nullable
+		@Override
+		protected BitmapDrawable doInBackground(String... params) {
+			ifid = params[0];
+			filePath = params[1];
+			Context c = mContext.get();
+			if (c != null) {
+				try {
+					// If caller passed ifid as filePath (quick hack), resolve via DB
+					String resolvedPath = filePath;
+					if (filePath.equals(ifid)) {
+						IFictionDbHelper dbHelper = new IFictionDbHelper(c);
+						SQLiteDatabase db = dbHelper.getReadableDatabase();
+						Cursor cur = db.rawQuery("SELECT gamepath FROM ifmetadata WHERE ifid = ?", new String[]{ifid});
+						if (cur.moveToFirst()) {
+							resolvedPath = cur.getString(0);
+						}
+						cur.close();
+						db.close();
+					}
+					String folderName = new File(resolvedPath).getName().toLowerCase();
+					String path = GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + folderName + "/cover.png";
+					File f = new File(path);
+					if (f.exists()) {
+						return new BitmapDrawable(c.getResources(), GLKUtils.getBitmapFromFile(path, width, height));
+					}
+				} catch (@NonNull IOException | SecurityException e) {
+					FabLogger.error("AsyncLoader: Cannot access game data directory.");
+					return null;
+				}
+			}
+			return null;
+		}   
 
         // Once complete, see if TextView is still around and set bitmap.
         @Override
@@ -174,9 +190,13 @@ public class AsyncLoaders {
                 final TextView tv = tvRef.get();
                 final BitmapWorkerTask bitmapWorkerTask = getBitmapWorkerTask(tv);
                 if (this == bitmapWorkerTask) {
-                    tv.setCompoundDrawablesWithIntrinsicBounds(null, bitmap, null, null);
+					// Scale cover art to 120dp square to match the widened grid columns
+                    // (original used intrinsic bounds, which rendered images too small)
+                    int size = (int)(tv.getResources().getDisplayMetrics().density * 120);
+                    bitmap.setBounds(0, 0, size, size);
+                    tv.setCompoundDrawables(null, bitmap, null, null);
                 }
             }
         }
     }
-}
+}   

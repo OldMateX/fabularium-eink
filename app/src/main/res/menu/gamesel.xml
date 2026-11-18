@@ -58,5 +58,23 @@
         android:id="@+id/action_help"
         android:title="@string/menu_help"
         app:showAsAction="never" />
+	
+    <!-- Download and overwrite metadata for all games in the library -->
+    <item
+        android:id="@+id/action_updateAllMetadata"
+        android:title="Update All Metadata"
+        app:showAsAction="never" />
+		
+    <!-- Download and overwrite text metadata only (skips the covers) -->
+    <item
+        android:id="@+id/action_updateTextOnly"
+        android:title="Update All Text Metadata"
+        app:showAsAction="never" />   
+		
+    <!-- Only download metadata for games that don't have a description -->
+    <item
+        android:id="@+id/action_downloadMissingMetadata"
+        android:title="Download Missing Metadata"
+        app:showAsAction="never" />    
 
 </menu>

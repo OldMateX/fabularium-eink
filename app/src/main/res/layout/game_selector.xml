@@ -25,7 +25,7 @@
         android:id="@+id/gvGames"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:columnWidth="75dp"
+        android:columnWidth="120dp"
         android:contentDescription="@string/game_library"
         android:horizontalSpacing="8dp"
         android:numColumns="auto_fit"

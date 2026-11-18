@@ -700,16 +700,19 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                 // that the user won't be able to double-tap it and will have to type
                 // the old-fashioned way (as painful as that would be).
                 String word = txt.subSequence(i1, i2).toString().trim();
-                StringBuilder sbBuf = mModel.mInput;
-                int lenBuf = sbBuf.length();
-                if (lenBuf > 0 && !Character.isWhitespace(sbBuf.charAt(lenBuf - 1))) {
-                    // Spare the user the annoyance of typing an additional space
-                    sbBuf.append(' ');
+                // Append to display buffer and flush to GLK byte buffer immediately
+                // (same pattern as processTADSLink - ensures C layer sees the text)
+                int lenBuf = mModel.mInput.length();
+                if (lenBuf > 0 && !Character.isWhitespace(mModel.mInput.charAt(lenBuf - 1))) {
+                    mModel.mInput.append(' ');
                 }
-                sbBuf.append(word);
+                mModel.mInput.append(word);
+                if (mModel.mInputBB != null) {
+                    mModel.mCharsetMgr.putGLKString(mModel.mInput.toString(), mModel.mInputBB, mModel.mIs32Bit, false);
+                }
                 drawInput();
                 scrollToEnd();
-                invalidate();
+                invalidate();   
             }
             return true;
         }

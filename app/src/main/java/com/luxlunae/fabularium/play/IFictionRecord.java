@@ -39,6 +39,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
@@ -87,7 +88,7 @@ public class IFictionRecord {
         System.loadLibrary("babel");
     }
 
-    String file_path;
+    public String file_path;
     public String[] ifids;
     @Nullable
     public String format;
@@ -492,7 +493,7 @@ public class IFictionRecord {
             // Otherwise, copies the cover art for the story file into the output buffer,
             // returning the size in bytes
             try {
-                saveCoverToDisk(c, tmp_storage.array(), tmp_storage.arrayOffset(), i, ifr.ifids[0]);
+                saveCoverToDisk(c, tmp_storage.array(), tmp_storage.arrayOffset(), i, ifr.ifids[0], ifr.file_path);
             } catch (IOException e) {
                 return false;
             }
@@ -602,10 +603,10 @@ public class IFictionRecord {
                         //      <genre>, <group>, <description>, <series>, <seriesnumber>,
                         //      <forgiveness>
                         case "title":
-                            ifr.title = grandChildValue;
+                            ifr.title = android.text.Html.fromHtml(grandChildValue).toString();   // This decodes all common XML/HTML entities (&#039; , &amp; , etc) before storing the title.
                             break;
                         case "author":
-                            ifr.author = grandChildValue;
+                            ifr.author = android.text.Html.fromHtml(grandChildValue).toString();   // This decodes all common XML/HTML entities (&#039; , &amp; , etc) before storing the author.
                             break;
                         case "language":
                             ifr.language = grandChildValue;
@@ -625,16 +626,24 @@ public class IFictionRecord {
                         case "description":
                             StringBuilder sb = new StringBuilder();
                             for (int i2 = 0; i2 < sz2; ++i2) {
-                                String s = grandchildren.item(i2).getNodeValue();
-                                if (s != null) {
-                                    if (sb.length() > 0) {
-                                        sb.append("\n\n");
+                                org.w3c.dom.Node descNode = grandchildren.item(i2);
+                                if (descNode.getNodeType() == org.w3c.dom.Node.ELEMENT_NODE
+                                        && "br".equalsIgnoreCase(descNode.getNodeName())) {
+                                    // <br/> element → paragraph break
+                                    sb.append("\n\n");
+                                } else {
+                                    String s = descNode.getNodeValue();
+                                    if (s != null) {
+                                        if (sb.length() > 0) {
+                                            sb.append("\n\n");
+                                        }
+                                        sb.append(s);
                                     }
-                                    sb.append(s);
                                 }
-                            }
+                            }   
                             if (sb.length() > 0) {
-                                ifr.description = sb.toString();
+                                String desc = sb.toString().replaceAll("<br\\s*/?>", "\n\n");
+                                ifr.description = android.text.Html.fromHtml(desc).toString();   // This decodes all common XML/HTML entities (&#039; , &amp; , etc) before storing the description.
                             }
                             break;
                         case "series":
@@ -733,13 +742,13 @@ public class IFictionRecord {
     }
 
     public static void saveCoverToDisk(@NonNull Context c, @NonNull byte[] b,
-                                       int offset, int length, @NonNull String ifid) throws IOException {
+                                       int offset, int length, @NonNull String ifid, @NonNull String filePath) throws IOException {   
         // save the complete bitmap to disk
         FileOutputStream out = null;
         Bitmap bmp = BitmapFactory.decodeByteArray(b, offset, length);
         if (bmp != null) {
             try {
-                out = new FileOutputStream(GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + ifid + "/cover.png");
+                out = new FileOutputStream(GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + new File(filePath).getName().toLowerCase() + "/cover.png");
                 bmp.compress(Bitmap.CompressFormat.PNG, 100, out); // bmp is your Bitmap instance
                 // PNG is a lossless format, the compression factor (100) is ignored
             } finally {

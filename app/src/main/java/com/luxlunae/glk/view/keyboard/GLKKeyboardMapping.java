@@ -366,10 +366,18 @@ public class GLKKeyboardMapping {
                                         case "11x4":
                                             curMapping.mXmlLayoutResId = R.xml.keyboard_11x4;
                                             break;
+										// added 10*3 case for my COMMAND Keyboard
+									    case "10x3":
+											curMapping.mXmlLayoutResId = R.xml.keyboard_10x3;
+											break;
+                                        case "7x3":
+											curMapping.mXmlLayoutResId = R.xml.keyboard_7x3;
+											break;
                                         case "10x4":
                                         default:
                                             // don't need to do anything
                                             break;
+											
                                     }
                                 }
                                 GLKLogger.debug("    Reading layout " + mappings.size());

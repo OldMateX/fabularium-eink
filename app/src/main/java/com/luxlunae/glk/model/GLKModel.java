@@ -542,7 +542,8 @@ public class GLKModel extends AndroidViewModel {
 
         mIFID = ifid.toLowerCase();
         try {
-            mGameDataPath = GLKConstants.getDir(getApplicationContext(), GLKConstants.SUBDIR.GAMEDATA) + "/" + mIFID + "/";
+			String folderName = mGameName;
+			mGameDataPath = GLKConstants.getDir(getApplicationContext(), GLKConstants.SUBDIR.GAMEDATA) + "/" + folderName + "/";   
         } catch (IOException e) {
             Toast.makeText(getApplicationContext(),
                     "Warning: Could not access game data directory. You will not be able to save, restore, etc. for this play session. Please check you have granted file read/write permissions and try again, If you have overridden any default paths in your settings, also check those paths exist and Fabularium has read/write access to them.",

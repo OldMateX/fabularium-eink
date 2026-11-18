@@ -88,7 +88,8 @@ public class IFictionDialogFragment extends DialogFragment {
         Bitmap default_image = b.getParcelable(MainActivity.DEFAULT_BITMAP);
         assert default_image != null;
         int px = GLKUtils.dpToPx(PREVIEW_IMAGE_SIZE_DP, getResources().getDisplayMetrics());
-        AsyncLoaders.loadBitmap(mIfr.ifids[0], tv, context, default_image, px, px);
+        AsyncLoaders.loadBitmap(mIfr.ifids[0], mIfr.file_path, tv, context, default_image, px, px);
+
 
         builder.setView(dialogView);
         builder.setPositiveButton(R.string.dialog_close, new DialogInterface.OnClickListener() {

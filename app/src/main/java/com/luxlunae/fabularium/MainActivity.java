@@ -37,10 +37,12 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.KeyEvent;	// Added
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.GridView;   // Added
 import android.widget.Toast;
 
 import com.luxlunae.fabularium.create.ProjectSelectorFragment;
@@ -85,6 +87,89 @@ public class MainActivity extends AppCompatActivity
     @Nullable
     private CompoundButton.OnCheckedChangeListener mCheckboxListener;
     private int mNumSelected = 0;
+
+    // Volume-key page navigation: page through grids/lists, or scroll dialogs
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (event.getAction() == KeyEvent.ACTION_DOWN) {
+            if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN || keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
+                android.view.View root = findViewById(android.R.id.content);
+                int direction = (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) ? 1 : -1;
+
+                // 1. Try any visible GridView (Play, Create tabs)
+                android.widget.GridView grid = findFirstVisibleGridView(root);
+                if (grid != null && grid.getCount() > 0) {
+                    int numCols = grid.getNumColumns();
+                    int current = grid.getFirstVisiblePosition();
+                    int rowsPerPage = 3;
+                    int target = current + (direction * rowsPerPage * numCols);
+                    grid.setSelection(Math.max(0, Math.min(target, grid.getCount() - 1)));
+                    return true;
+                }
+
+                // 2. Try any visible ListView (Explore tab)
+                android.widget.ListView list = findFirstVisibleListView(root);
+                if (list != null && list.getCount() > 0) {
+                    int current = list.getFirstVisiblePosition();
+                    int itemsPerPage = 8;
+                    int target = current + (direction * itemsPerPage);
+                    list.setSelection(Math.max(0, Math.min(target, list.getCount() - 1)));
+                    return true;
+                }
+
+                // 3. Try any visible ScrollView (metadata dialog, help, etc.)
+                android.widget.ScrollView scroll = findFirstVisibleScrollView(root);
+                if (scroll != null) {
+                    int scrollAmount = scroll.getHeight();
+                    scroll.smoothScrollBy(0, direction * scrollAmount);
+                    return true;
+                }
+            }
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private android.widget.GridView findFirstVisibleGridView(android.view.View parent) {
+        if (parent instanceof android.widget.GridView) {
+            if (parent.getVisibility() == android.view.View.VISIBLE) return (android.widget.GridView) parent;
+        }
+        if (parent instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) parent;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                android.widget.GridView found = findFirstVisibleGridView(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private android.widget.ListView findFirstVisibleListView(android.view.View parent) {
+        if (parent instanceof android.widget.ListView) {
+            if (parent.getVisibility() == android.view.View.VISIBLE) return (android.widget.ListView) parent;
+        }
+        if (parent instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) parent;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                android.widget.ListView found = findFirstVisibleListView(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }
+
+    private android.widget.ScrollView findFirstVisibleScrollView(android.view.View parent) {
+        if (parent instanceof android.widget.ScrollView) {
+            if (parent.getVisibility() == android.view.View.VISIBLE) return (android.widget.ScrollView) parent;
+        }
+        if (parent instanceof android.view.ViewGroup) {
+            android.view.ViewGroup group = (android.view.ViewGroup) parent;
+            for (int i = 0; i < group.getChildCount(); i++) {
+                android.widget.ScrollView found = findFirstVisibleScrollView(group.getChildAt(i));
+                if (found != null) return found;
+            }
+        }
+        return null;
+    }   
 
     /**
      * Called when the activity is starting. This is where most initialization should go:

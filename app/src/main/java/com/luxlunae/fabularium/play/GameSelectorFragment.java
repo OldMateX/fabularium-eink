@@ -84,8 +84,8 @@ public class GameSelectorFragment extends Fragment
     private final static String URL_DIALOG_TAG = "com.luxlunae.fabularium.GAME_URL_DIALOG_TAG";
     private final static String IFICTION_DIALOG_TAG = "com.luxlunae.fabularium.IFICTION_DIALOG_TAG";
 
-    private final static int ICON_WIDTH = 48;      // in dp
-    private final static int ICON_HEIGHT = 48;     // in dp
+    private final static int ICON_WIDTH = 120;      // in dp
+    private final static int ICON_HEIGHT = 120;     // in dp
 
     /* Default server and arguments to download XML metadata, given IFID or TUID */
     /* If there is a cover image a link will be provided under tag <coverart> => <url> */
@@ -137,7 +137,7 @@ public class GameSelectorFragment extends Fragment
         DisplayMetrics dm = getResources().getDisplayMetrics();
         mIconWidth = GLKUtils.dpToPx(ICON_WIDTH, dm);
         mIconHeight = GLKUtils.dpToPx(ICON_HEIGHT, dm);
-        mDefaultIcon = GLKUtils.getBitmapFromResource(getResources(), R.mipmap.ic_launcher, mIconWidth, mIconHeight);
+        mDefaultIcon = GLKUtils.getBitmapFromResource(getResources(), R.drawable.default_game_icon, mIconWidth, mIconHeight);
     }
 
     /**
@@ -414,6 +414,100 @@ public class GameSelectorFragment extends Fragment
                 dialog.show(act.getSupportFragmentManager(), URL_DIALOG_TAG);
                 return true;
             }
+			
+            case R.id.action_updateAllMetadata: {
+                // Re-download and overwrite metadata for all games
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(act);
+                String metadataUrl = sharedPref.getString(PreferencesActivity.KEY_PREF_SERVER_URL, METADATA_DEF_SERVER_IFID);
+                if (metadataUrl.equals("")) {
+                    Toast.makeText(act, "Metadata server url in settings is blank.", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                SQLiteDatabase dbReader = mDbHelper.getReadableDatabase();
+                Cursor allCursor = dbReader.query(IFictionDbHelper.IFictionEntry.TABLE_NAME,
+                        new String[]{IFictionDbHelper.IFictionEntry.COLUMN_NAME_ENTRY_ID},
+                        null, null, null, null, null);
+                int count = allCursor.getCount();
+                IFictionRecord[] allRecords = new IFictionRecord[count];
+                for (int i = 0; i < count; i++) {
+                    allCursor.moveToPosition(i);
+                    allRecords[i] = IFictionDbHelper.get(allCursor.getString(0), dbReader);
+                }
+                allCursor.close();
+                dbReader.close();
+                if (count == 0) {
+                    Toast.makeText(act, "No games in the library.", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                AsyncProgressFragment f = new AsyncProgressFragment();
+                act.getSupportFragmentManager().beginTransaction().add(f, "frag_update_all").commit();
+                f.downloadMetadata(act.getResources(), this, act, metadataUrl, allRecords);
+                return true;
+            }
+			
+            case R.id.action_downloadMissingMetadata: {
+                // Only download metadata for games with no description
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(act);
+                String metadataUrl = sharedPref.getString(PreferencesActivity.KEY_PREF_SERVER_URL, METADATA_DEF_SERVER_IFID);
+                if (metadataUrl.equals("")) {
+                    Toast.makeText(act, "Metadata server url in settings is blank.", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                SQLiteDatabase dbReader = mDbHelper.getReadableDatabase();
+                Cursor missingCursor = dbReader.query(IFictionDbHelper.IFictionEntry.TABLE_NAME,
+                        new String[]{IFictionDbHelper.IFictionEntry.COLUMN_NAME_ENTRY_ID},
+                        IFictionDbHelper.IFictionEntry.COLUMN_NAME_DESCRIPTION + " IS NULL OR " +
+                                IFictionDbHelper.IFictionEntry.COLUMN_NAME_DESCRIPTION + " = ''",
+                        null, null, null, null);
+                int count = missingCursor.getCount();
+                if (count == 0) {
+                    missingCursor.close();
+                    dbReader.close();
+                    Toast.makeText(act, "No games missing metadata.", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                IFictionRecord[] missingRecords = new IFictionRecord[count];
+                for (int i = 0; i < count; i++) {
+                    missingCursor.moveToPosition(i);
+                    missingRecords[i] = IFictionDbHelper.get(missingCursor.getString(0), dbReader);
+                }
+                missingCursor.close();
+                dbReader.close();
+                AsyncProgressFragment f = new AsyncProgressFragment();
+                act.getSupportFragmentManager().beginTransaction().add(f, "frag_download_missing").commit();
+                f.downloadMetadata(act.getResources(), this, act, metadataUrl, missingRecords);
+                return true;
+            }     
+			
+			            case R.id.action_updateTextOnly: {
+                // Re-download text metadata only (no covers) for all games
+                SharedPreferences sharedPref = PreferenceManager.getDefaultSharedPreferences(act);
+                String metadataUrl = sharedPref.getString(PreferencesActivity.KEY_PREF_SERVER_URL, METADATA_DEF_SERVER_IFID);
+                if (metadataUrl.equals("")) {
+                    Toast.makeText(act, "Metadata server url in settings is blank.", Toast.LENGTH_LONG).show();
+                    return true;
+                }
+                SQLiteDatabase dbReader = mDbHelper.getReadableDatabase();
+                Cursor allCursor = dbReader.query(IFictionDbHelper.IFictionEntry.TABLE_NAME,
+                        new String[]{IFictionDbHelper.IFictionEntry.COLUMN_NAME_ENTRY_ID},
+                        null, null, null, null, null);
+                int count = allCursor.getCount();
+                IFictionRecord[] allRecords = new IFictionRecord[count];
+                for (int i = 0; i < count; i++) {
+                    allCursor.moveToPosition(i);
+                    allRecords[i] = IFictionDbHelper.get(allCursor.getString(0), dbReader);
+                }
+                allCursor.close();
+                dbReader.close();
+                if (count == 0) {
+                    Toast.makeText(act, "No games in the library.", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                AsyncProgressFragment f = new AsyncProgressFragment();
+                act.getSupportFragmentManager().beginTransaction().add(f, "frag_text_only").commit();
+                f.downloadTextOnlyMetadata(act.getResources(), this, act, metadataUrl, allRecords);
+                return true;
+            }   
 
             default:
                 // If we got here, the user's action was not recognized.
@@ -691,7 +785,7 @@ public class GameSelectorFragment extends Fragment
                 // We also assume that the view we're binding to is a TextView, again
                 // so we don't have the performance overheads of checking.
                 String ifid = cursor.getString(columnIndex);
-                AsyncLoaders.loadBitmap(ifid, (TextView) view, getContext(), mDefaultIcon, mIconWidth, mIconHeight);
+                AsyncLoaders.loadBitmap(ifid, ifid, (TextView) view, getContext(), mDefaultIcon, mIconWidth, mIconHeight);   
             }
             return true;
         }
@@ -738,8 +832,13 @@ public class GameSelectorFragment extends Fragment
 
         if (nDone < ifrs.length) {
             FabLogger.error("Unable to download all the metadata: " + lastErrorMsg);
-            Toast.makeText(act, "Unable to download all the metadata: " + lastErrorMsg, Toast.LENGTH_LONG).show();
-        }
+            int failed = ifrs.length - nDone;
+            new AlertDialog.Builder(act)
+                .setTitle(failed + " game(s) failed to update")
+                .setMessage(lastErrorMsg)
+                .setPositiveButton("OK", null)
+                .show();
+        }   
     }
 
     public void restartLoader() {

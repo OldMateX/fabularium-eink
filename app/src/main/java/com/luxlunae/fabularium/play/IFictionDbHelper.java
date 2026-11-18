@@ -210,7 +210,7 @@ public class IFictionDbHelper extends SQLiteOpenHelper implements AsyncProgressF
             // Create the game data directory for this game
             String gameDir;
             try {
-                gameDir = GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + ifr.ifids[0] + "/";
+                gameDir = GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA) + "/" + new File(ifr.file_path).getName().toLowerCase() + "/";
             } catch (@NonNull IOException | SecurityException e) {
                 FabLogger.error("  => Could not create game data directory for " + ifr.ifids[0] +
                         ". Please check you have granted file read/write permissions and try again. If you have overridden the default paths in your settings, also check that Fabularium has read/write access to that path.");

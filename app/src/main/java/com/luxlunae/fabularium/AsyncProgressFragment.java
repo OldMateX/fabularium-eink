@@ -139,6 +139,14 @@ public class AsyncProgressFragment extends Fragment {
             ((RefreshDatabaseTask) mTask).execute(syncDir);
         }
     }
+	
+    public void downloadTextOnlyMetadata(@NonNull Resources res, @NonNull DownloadMetadataCallback callback, @NonNull Context c, @NonNull String serverUrl, @NonNull IFictionRecord[] ifrs) {
+        if (!mIsTaskRunning) {
+            mTask = new DownloadTextOnlyTask(this, serverUrl, callback, c);
+            mProgressMessage = res.getString(R.string.progress_spinner_downloading_metadata);
+            ((DownloadTextOnlyTask) mTask).execute(ifrs);
+        }
+    }   
 
     @Override
     public void onActivityCreated(Bundle savedInstanceState) {
@@ -786,17 +794,17 @@ public class AsyncProgressFragment extends Fragment {
                 return null;
             }
 
-            try {
-                for (IFictionRecord ifr : ifrs) {
-                    // Assume failure
-                    ret[k] = null;
+            for (IFictionRecord ifr : ifrs) {
+                // Assume failure
+                ret[k] = null;
 
-                    String format = ifr.format;  // don't overwrite this
-                    if (ifr.ifids != null && ifr.ifids.length > 0) {
-                        String ifid = ifr.ifids[0];
+                String format = ifr.format;  // don't overwrite this
+                if (ifr.ifids != null && ifr.ifids.length > 0) {
+                    String ifid = ifr.ifids[0];
 
+                    try {
                         // Try to create the game data directory if it doesn't already exist
-                        File ifidDir = new File(gameDataDir, ifid);
+                        File ifidDir = new File(gameDataDir, new File(ifr.file_path).getName().toLowerCase());
                         if (!ifidDir.exists() && !ifidDir.mkdirs()) {
                             FabLogger.warn("AsyncLoaders: downloadMetadata: Cannot create IFID game data subdirectory.");
                         }
@@ -812,21 +820,21 @@ public class AsyncProgressFragment extends Fragment {
                         // Try to download the cover
                         if (ifr.coverURL != null && !ifr.coverURL.equals("")) {
                             byte[] b = getBitmapFromURL(ifr.coverURL);
-                            FabLogger.error("bitmap size is " + b.length);
                             if (b != null) {
-                                IFictionRecord.saveCoverToDisk(c, b, 0, b.length, ifid);
+                                IFictionRecord.saveCoverToDisk(c, b, 0, b.length, ifid, ifr.file_path);
                                 ret[k] = ifr;
                             }
                         }
+                    } catch (IOException e) {
+                        // One game failed - log and continue with the next
+                        mLastErrorMsg = (mLastErrorMsg != null ? mLastErrorMsg + "\n" : "") + ifr.title + " (" + ifid + "): " + e.getMessage();      
+                        FabLogger.error("downloadMetadata: failed for " + ifid + ": " + e.getMessage());
                     }
-
-                    k++;
                 }
-                return ret;
-            } catch (IOException e) {
-                mLastErrorMsg = e.getMessage();
-                return null;
+
+                k++;
             }
+            return ret;   
         }
 
         @Override
@@ -1014,4 +1022,91 @@ public class AsyncProgressFragment extends Fragment {
             mListener.onTaskFinished();
         }
     }
+
+    private static class DownloadTextOnlyTask extends AsyncTask<IFictionRecord, Void, IFictionRecord[]> {
+        @NonNull
+        private final String mServerUrl;
+        @NonNull
+        private final WeakReference<DownloadMetadataCallback> mCallback;
+        @NonNull
+        private final WeakReference<Context> mContext;
+        @NonNull
+        private final AsyncProgressFragment mListener;
+        @Nullable
+        private static String mLastErrorMsg = null;
+
+        DownloadTextOnlyTask(@NonNull AsyncProgressFragment f, @NonNull String serverUrl,
+                             @NonNull DownloadMetadataCallback callback, @NonNull Context c) {
+            mCallback = new WeakReference<>(callback);
+            mServerUrl = serverUrl;
+            mContext = new WeakReference<>(c);
+            mListener = f;
+        }
+
+        @Override
+        protected void onPreExecute() {
+            mListener.onTaskStarted();
+        }
+
+        @Nullable
+        @Override
+        protected IFictionRecord[] doInBackground(@NonNull IFictionRecord... ifrs) {
+            IFictionRecord[] ret = new IFictionRecord[ifrs.length];
+            int k = 0;
+            Context c = mContext.get();
+
+            if (c == null) {
+                mLastErrorMsg = "Cannot get a valid context.";
+                return null;
+            }
+
+            final File gameDataDir;
+            try {
+                gameDataDir = new File(GLKConstants.getDir(c, GLKConstants.SUBDIR.GAMEDATA));
+            } catch (IOException e) {
+                mLastErrorMsg = "Cannot get game data directory.";
+                return null;
+            }
+
+            for (IFictionRecord ifr : ifrs) {
+                ret[k] = null;
+                String format = ifr.format;
+
+                if (ifr.ifids != null && ifr.ifids.length > 0) {
+                    String ifid = ifr.ifids[0];
+
+                    try {
+                        File ifidDir = new File(gameDataDir, new File(ifr.file_path).getName().toLowerCase());
+                        if (!ifidDir.exists() && !ifidDir.mkdirs()) {
+                            FabLogger.warn("Cannot create IFID game data subdirectory.");
+                        }
+
+                        String xml = DownloadMetadataTask.getXMLFromURL(mServerUrl + ifr.ifids[0]);
+                        boolean r = IFictionRecord.loadMetadataFromXML(ifr, xml);
+                        ifr.format = format;
+                        if (r) {
+                            ret[k] = ifr;
+                        }
+                    } catch (IOException e) {
+                        mLastErrorMsg = (mLastErrorMsg != null ? mLastErrorMsg + "\n" : "") + ifr.title + " (" + ifid + "): " + e.getMessage();      
+                        FabLogger.error("downloadTextOnly: failed for " + ifid + ": " + e.getMessage());
+                    }
+                }
+
+                k++;
+            }
+            return ret;
+        }
+
+        @Override
+        protected void onPostExecute(@Nullable IFictionRecord[] result) {
+            FabLogger.flush();
+            DownloadMetadataCallback callback = mCallback.get();
+            if (callback != null) {
+                callback.onDownloadMetadataPostExecute(result, mLastErrorMsg);
+            }
+            mListener.onTaskFinished();
+        }
+    }   	
+
 }

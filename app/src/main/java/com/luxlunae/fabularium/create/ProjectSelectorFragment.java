@@ -75,8 +75,8 @@ public class ProjectSelectorFragment extends Fragment
     private final static String URL_DIALOG_TAG = "com.luxlunae.fabularium.PROJECT_URL_DIALOG_TAG";
     private final static String PROJECT_DIALOG_TAG = "com.luxlunae.fabularium.PROJECT_DIALOG_TAG";
 
-    private final static int ICON_WIDTH = 48;      // in dp
-    private final static int ICON_HEIGHT = 48;     // in dp
+    private final static int ICON_WIDTH = 120;      // in dp
+    private final static int ICON_HEIGHT = 120;     // in dp
 
     @Nullable
     private ProjectDbHelper mDbHelper;
