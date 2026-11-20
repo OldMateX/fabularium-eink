@@ -17,11 +17,11 @@
         android:allowBackup="true"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher"
-        android:label="FabTest"
+        android:label="@string/app_name"
         android:theme="@style/Theme.Fabularium">
         <activity
             android:name=".MainActivity"
-            android:label="FabTest">
+            android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -31,7 +31,7 @@
         <activity
             android:name="com.luxlunae.glk.GLKActivity"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:label="FabTest"
+            android:label="@string/app_name"
             android:process=":GLKActivity"
             android:theme="@style/Theme.Fabularium.Translucent" />
 

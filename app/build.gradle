@@ -5,7 +5,7 @@ android {
     ndkVersion '25.2.9519653'
 
     defaultConfig {
-        applicationId 'io.davidar.fabularium.test'
+        applicationId 'io.davidar.fabularium'
         minSdk 19
         targetSdk 28
     }
