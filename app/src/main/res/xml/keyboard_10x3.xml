@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ Copyright (C) 2017 Tim Cadogan-Cowper.
+  ~
+  ~ This file is part of Fabularium.
+  ~
+  ~ Fabularium is free software; you can redistribute it and/or
+  ~ modify it under the terms of the GNU General Public License
+  ~ as published by the Free Software Foundation; either version 2
+  ~ of the License, or (at your option) any later version.
+  ~
+  ~ This program is distributed in the hope that it will be useful,
+  ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+  ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  ~ GNU General Public License for more details.
+  ~
+  ~ You should have received a copy of the GNU General Public License
+  ~ along with Fabularium; if not, write to the Free Software
+  ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+  -->
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:horizontalGap="0.45%p"
+    app:keyHeight="50dp"
+    app:keyWidth="9.4%p"
+    app:verticalGap="0.45%p">
+
+    <!-- Row 1: 10 keys x 9.4% + 11 gaps x 0.45% = 99.95% -->
+    <Row>
+        <Key app:codes="1" app:keyEdgeFlags="left" app:keyLabel="GET" />
+        <Key app:codes="2" app:keyLabel="DROP" />
+        <Key app:codes="3" app:keyLabel="OPEN" />
+        <Key app:codes="4" app:keyLabel="CLOSE" />
+        <Key app:codes="5" app:keyLabel="EXAM" />
+        <Key app:codes="6" app:keyLabel="TALK" />
+        <Key app:codes="7" app:keyLabel="TAKE" />
+        <Key app:codes="8" app:keyLabel="⇖" />
+        <Key app:codes="9" app:keyLabel="⇑" />
+        <Key app:codes="10" app:keyEdgeFlags="right" app:keyLabel="⇗" />
+    </Row>
+
+    <!-- Row 2: 10 keys x 9.4% + 11 gaps x 0.45% = 99.95% -->
+    <Row>
+        <Key app:codes="11" app:keyEdgeFlags="left" app:keyLabel="X" />
+        <Key app:codes="12" app:keyLabel="GIVE" />
+        <Key app:codes="13" app:keyLabel="PUT" />
+        <Key app:codes="14" app:keyLabel="MOVE" />
+        <Key app:codes="15" app:keyLabel="TURN" />
+        <Key app:codes="16" app:keyLabel="PUSH" />
+        <Key app:codes="17" app:keyLabel="PULL" />
+        <Key app:codes="18" app:keyLabel="⇐" />
+        <Key app:codes="19" app:keyLabel="WAIT" />
+        <Key app:codes="20" app:keyEdgeFlags="right" app:keyLabel="⇒" />
+    </Row>
+
+    <!-- Row 3: 10 keys x 9.4% + 11 gaps x 0.45% = 99.95% -->
+    <Row app:rowEdgeFlags="bottom">
+        <Key app:codes="21" app:keyEdgeFlags="left" app:keyLabel="EAT" />
+        <Key app:codes="22" app:keyLabel="READ" />
+        <Key app:codes="23" app:keyLabel="WAVE" />
+        <Key app:codes="24" app:keyLabel="HIT" />
+        <Key app:codes="25" app:keyLabel="USE" />
+        <Key app:codes="26" app:keyLabel="UNDO" />
+        <Key app:codes="27" app:keyLabel="SCORE" />
+        <Key app:codes="28" app:keyLabel="⇙" />
+        <Key app:codes="29" app:keyLabel="⇓" />
+        <Key app:codes="30" app:keyEdgeFlags="right" app:keyLabel="⇘" />
+    </Row>
+
+</Keyboard>   

@@ -30,15 +30,15 @@ import android.graphics.Bitmap;
 import android.net.Uri;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
-import android.support.v7.app.AlertDialog;
-import android.support.v7.widget.PopupMenu;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
+import androidx.loader.app.LoaderManager;
+import androidx.loader.content.CursorLoader;
+import androidx.loader.content.Loader;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.widget.PopupMenu;
 import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -773,24 +773,31 @@ public class GameSelectorFragment extends Fragment
      * @param columnIndex - the column at which the data can be found in the cursor
      * @return true if the data was bound to the view, false otherwise
      */
-    @Override
-    public boolean setViewValue(@NonNull View view, @NonNull Cursor cursor, int columnIndex) {
-        if (columnIndex == 1) {
-            Context c = getContext();
-            if (c != null && mDefaultIcon != null) {
-                // N.B. We assume that the second column of the cursor is
-                // the ifid, based on how the mAdapter is constructed in the onCreate()
-                // method above.  We could call cursor.getColumnName(columnIndex) to
-                // check, but we're trying to avoid the performance overhead.
-                // We also assume that the view we're binding to is a TextView, again
-                // so we don't have the performance overheads of checking.
-                String ifid = cursor.getString(columnIndex);
-                AsyncLoaders.loadBitmap(ifid, ifid, (TextView) view, getContext(), mDefaultIcon, mIconWidth, mIconHeight);   
-            }
-            return true;
-        }
-        return false;
-    }
+	@Override
+	public boolean setViewValue(@NonNull View view, @NonNull Cursor cursor, int columnIndex) {
+		if (columnIndex == 1) {
+			Context c = getContext();
+			if (c != null && mDefaultIcon != null) {
+				// Skip if this view already has a loaded icon (prevents eink flash on scroll)
+				TextView textView = (TextView) view;
+				if (Boolean.TRUE.equals(textView.getTag(R.id.cover_loaded))) {
+					return true;
+				}
+				// N.B. We assume that the second column of the cursor is
+				// the ifid, based on how the mAdapter is constructed in the onCreate()
+				// method above.
+				String ifid = cursor.getString(columnIndex);
+				SQLiteDatabase dbReader = mDbHelper.getReadableDatabase();
+				IFictionRecord ifr = IFictionDbHelper.get(ifid, dbReader);
+				dbReader.close();
+				String filePath = (ifr != null) ? ifr.file_path : ifid;
+				AsyncLoaders.loadBitmap(filePath, ifid, textView, getContext(), mDefaultIcon, mIconWidth, mIconHeight);
+				textView.setTag(R.id.cover_loaded, true);
+			}
+			return true;
+		}
+		return false;
+	}   
 
     /**
      * A callback from RefreshDbFragment when the database has finished refreshing.

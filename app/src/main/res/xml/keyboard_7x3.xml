@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Keyboard xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:horizontalGap="0.%p"
+    app:keyHeight="50dp"
+    app:keyWidth="13.7%p"
+    app:verticalGap="0.5%p">
+
+    <!-- Row 1: 7 keys x 13% + 8 gaps x 0.5% = 95% -->
+    <Row>
+        <Key app:codes="1" app:keyEdgeFlags="left" app:keyLabel="take" />
+        <Key app:codes="2" app:keyLabel="open" />
+        <Key app:codes="3" app:keyLabel="talk" />
+        <Key app:codes="4" app:keyLabel="ask" />
+        <Key app:codes="5" app:keyLabel="⇖" />
+        <Key app:codes="6" app:keyLabel="⇑" />
+        <Key app:codes="7" app:keyEdgeFlags="right" app:keyLabel="⇗" />
+    </Row>
+
+    <!-- Row 2: 7 keys x 13.7% + 8 gaps x 0.45% = 99.5% -->
+    <Row>
+        <Key app:codes="8" app:keyEdgeFlags="left" app:keyLabel="pull" />
+        <Key app:codes="9" app:keyLabel="put" />
+        <Key app:codes="10" app:keyLabel="turn" />
+        <Key app:codes="11" app:keyLabel="hit" />
+        <Key app:codes="12" app:keyLabel="⇐" />
+        <Key app:codes="13" app:keyLabel="wait" />
+        <Key app:codes="14" app:keyEdgeFlags="right" app:keyLabel="⇒" />
+    </Row>
+
+    <!-- Row 3: 7 keys x 13.7% + 8 gaps x 0.45% = 99.5% -->
+    <Row app:rowEdgeFlags="bottom">
+        <Key app:codes="15" app:keyEdgeFlags="left" app:keyLabel="exam" />
+        <Key app:codes="16" app:keyLabel="save" />
+        <Key app:codes="17" app:keyLabel="undo" />
+        <Key app:codes="18" app:keyLabel="eat" />
+        <Key app:codes="19" app:keyLabel="⇙" />
+        <Key app:codes="20" app:keyLabel="⇓" />
+        <Key app:codes="21" app:keyEdgeFlags="right" app:keyLabel="⇘" />
+    </Row>
+
+</Keyboard>   

@@ -21,22 +21,22 @@ package com.luxlunae.fabularium;
 
 import android.Manifest;
 import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.design.widget.Snackbar;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
-import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import com.google.android.material.snackbar.Snackbar;
+import com.google.android.material.tabs.TabLayout;
+import androidx.core.app.ActivityCompat;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
+import androidx.core.content.ContextCompat;
+import androidx.viewpager.widget.ViewPager;
+import androidx.appcompat.app.ActionBar;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 import android.view.KeyEvent;	// Added
 import android.view.View;
 import android.widget.Button;
@@ -44,6 +44,7 @@ import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.GridView;   // Added
 import android.widget.Toast;
+import androidx.preference.PreferenceManager;
 
 import com.luxlunae.fabularium.create.ProjectSelectorFragment;
 import com.luxlunae.fabularium.explore.FileListAdapter;
@@ -191,45 +192,49 @@ public class MainActivity extends AppCompatActivity
      *                           then this Bundle contains the data it most recently supplied in
      *                           onSaveInstanceState(Bundle). Note: Otherwise it is null.
      */
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        FabLogger.initialise(this);
-        if (DEBUG_LIFECYCLE) {
-            FabLogger.debug("MainActivity: onCreate()");
-        }
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.main_layout);
+	@Override
+	public void onCreate(@Nullable Bundle savedInstanceState) {
+		FabLogger.initialise(this);
+		if (DEBUG_LIFECYCLE) {
+			FabLogger.debug("MainActivity: onCreate()");
+		}
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean("pref_eink_optimised", false)) {
+			setTheme(R.style.Theme_Fabularium_EInk);
+		}
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.main_layout);
 
-        // Ensure we have the permissions we need
-        if (Build.VERSION.SDK_INT >= 23 &&
-                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-            // runtime permissions apply for Android M and above only
-            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                // Explain why we need the permission
-                FabLogger.warn("Displaying external storage permission rationale to provide additional context.");
+		// Ensure we have the permissions we need
+		if (Build.VERSION.SDK_INT >= 23 &&
+				ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+			// runtime permissions apply for Android M and above only
+			if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+				// Explain why we need the permission
+				FabLogger.warn("Displaying external storage permission rationale to provide additional context.");
 
-                // Show an explanation to the user *asynchronously* -- don't block
-                // this thread waiting for the user's response! After the user
-                // sees the explanation, try again to request the permission.
-                Snackbar sb = Snackbar.make(findViewById(R.id.mainContent),
-                        R.string.permission_rationale_extstorage, Snackbar.LENGTH_INDEFINITE);
-                sb.setAction(R.string.dialog_ok, new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        ActivityCompat.requestPermissions(MainActivity.this,
-                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
-                    }
-                });
-                sb.show();
-            } else {
-                // No explanation needed, just request the permission
-                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
-            }
-        } else {
-            copyCoreAssets();
-            createTabStrip();
-        }
-    }
+				// Show an explanation to the user *asynchronously* -- don't block
+				// this thread waiting for the user's response! After the user
+				// sees the explanation, try again to request the permission.
+				Snackbar sb = Snackbar.make(findViewById(R.id.mainContent),
+						R.string.permission_rationale_extstorage, Snackbar.LENGTH_INDEFINITE);
+				sb.setAction(R.string.dialog_ok, new View.OnClickListener() {
+					@Override
+					public void onClick(View view) {
+						ActivityCompat.requestPermissions(MainActivity.this,
+								new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
+					}
+				});
+				sb.show();
+			} else {
+				// No explanation needed, just request the permission
+				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
+			}
+		} else {
+			copyCoreAssets();
+			createTabStrip();
+		}
+	}   
 
     /**
      * Called as part of the activity lifecycle when an activity is going into

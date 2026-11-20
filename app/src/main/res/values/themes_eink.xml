@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- E-ink optimised theme: pure B&W, no animations, no shadows -->
+    <style name="Theme.Fabularium.EInk" parent="Theme.Fabularium">
+        <item name="colorPrimary">@color/eink_paper</item>
+        <item name="colorPrimaryDark">@color/eink_paper</item>
+        <item name="colorAccent">@color/eink_ink</item>
+        <item name="colorControlNormal">@color/eink_ink</item>
+        <item name="colorControlActivated">@color/eink_ink</item>
+        <item name="colorControlHighlight">@color/eink_pressed</item>
+        <item name="colorButtonNormal">@color/eink_paper</item>
+        <item name="android:colorBackground">@color/eink_paper</item>
+        <item name="android:windowBackground">@color/eink_paper</item>
+        <item name="android:popupBackground">@color/eink_paper</item>
+        <item name="android:textColorPrimary">@color/eink_ink</item>
+        <item name="android:textColorSecondary">@color/eink_ink_secondary</item>
+        <item name="android:textColorTertiary">@color/eink_ink_secondary</item>
+        <item name="android:textColorHint">@color/eink_ink_secondary</item>
+        <item name="android:textColor">@color/eink_ink</item>
+        <item name="android:statusBarColor" tools:targetApi="lollipop">@color/eink_paper</item>
+        <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+        <item name="android:navigationBarColor" tools:targetApi="lollipop">@color/eink_paper</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="o_mr1">true</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
+        <item name="android:alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
+        <item name="tabStyle">@style/Widget.Fabularium.TabLayout</item>
+        <item name="android:listDivider">@drawable/list_divider</item>
+        <item name="popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.PopupMenu.Overflow</item>
+        <item name="listPopupWindowStyle">@style/Widget.Fabularium.ListPopupWindow</item>
+        <item name="android:popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
+        <item name="android:listPopupWindowStyle">@style/Widget.Fabularium.ListPopupWindow</item>
+    </style>
+
+    <!-- Translucent variant for GLKActivity -->
+    <style name="Theme.Fabularium.EInk.Translucent" parent="Theme.Fabularium.EInk">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+</resources>   

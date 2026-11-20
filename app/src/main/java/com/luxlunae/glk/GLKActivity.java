@@ -20,20 +20,21 @@
 package com.luxlunae.glk;
 
 import android.annotation.SuppressLint;
-import android.arch.lifecycle.ViewModelProviders;
+import androidx.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.content.SharedPreferences;
 import android.graphics.Point;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.speech.tts.TextToSpeech;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AlertDialog;
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.FragmentActivity;
+import androidx.appcompat.app.AlertDialog;
 import android.view.KeyEvent;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -42,6 +43,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+import androidx.preference.PreferenceManager;
 
 import com.luxlunae.fabularium.FabLogger;
 import com.luxlunae.fabularium.MainActivity;
@@ -114,6 +116,13 @@ public class GLKActivity extends FragmentActivity
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         GLKLogger.initialise(this);
+
+		// Apply e-ink theme before super.onCreate() so it takes effect
+		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+		if (prefs.getBoolean("pref_eink_optimised", false)) {
+			setTheme(R.style.Theme_Fabularium_EInk_Translucent);
+		}
+
         super.onCreate(savedInstanceState);
 
         Intent intent = getIntent();

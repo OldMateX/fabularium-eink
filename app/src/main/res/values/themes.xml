@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Fabularium" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:popupBackground">#FFFFFF</item>
+        <!-- Override colours here as you go. You want to keep windowBackground and colorPrimary the same or you may get windows flashes.
+             Leave them out to use the Material3 defaults. -->
+
+        <!-- Example overrides (uncomment and adjust):
+        <item name="colorPrimary">#1B5E20</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>        
+        <item name="colorSecondary">#2E7D32</item>
+        <item name="colorOnSecondary">#FFFFFF</item>
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorSecondary">#424242</item>
+        -->
+
+        <!-- E-ink: kill animations (uncomment for e-ink builds)
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:popupBackground">#FFFFFF</item>
+        -->
+    </style>
+</resources>   
