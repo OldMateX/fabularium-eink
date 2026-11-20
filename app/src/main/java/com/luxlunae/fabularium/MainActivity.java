@@ -530,7 +530,7 @@ public class MainActivity extends AppCompatActivity
         MOVE_FILES
     }
 
-    private static class ScreenSlidePagerAdapter extends FragmentStatePagerAdapter {
+    private static class ScreenSlidePagerAdapter extends FragmentPagerAdapter {
         ScreenSlidePagerAdapter(FragmentManager fm) {
             super(fm);
         }
