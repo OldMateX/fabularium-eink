@@ -1,30 +1,33 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <style name="Theme.Fabularium" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Window -->
         <item name="android:windowBackground">#FFFFFF</item>
         <item name="android:popupBackground">#FFFFFF</item>
-        <!-- Toolbar: opposite of background -->
+
+        <!-- Toolbar: black bg, white text -->
         <item name="colorPrimary">#000000</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorAccent">#000000</item>   
 
-        <!-- Override colours here as you go. You want to keep windowBackground and colorPrimary the same or you may get windows flashes.
-             Leave them out to use the Material3 defaults. -->
+        <!-- Accent (dialog buttons, etc.) -->
+        <item name="colorAccent">#000000</item>
 
-        <!-- Example overrides (uncomment and adjust):
-        <item name="colorPrimary">#1B5E20</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:windowBackground">#FFFFFF</item>        
-        <item name="colorSecondary">#2E7D32</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="android:windowBackground">#FFFFFF</item>
+        <!-- Content area: explicitly pin all surface tokens
+             so Material3 doesn't derive them from colorPrimary -->
+        <item name="colorBackground">#FFFFFF</item>
+        <item name="colorOnBackground">#000000</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorOnSurface">#000000</item>
+        <item name="colorSurfaceVariant">#F5F5F5</item>
+        <item name="colorOnSurfaceVariant">#424242</item>
+        <item name="android:colorBackground">#FFFFFF</item>
         <item name="android:textColorPrimary">#000000</item>
         <item name="android:textColorSecondary">#424242</item>
-        -->
+        <item name="android:textColorTertiary">#616161</item>
+        <item name="android:textColorHint">#9E9E9E</item>
 
-        <!-- E-ink: kill animations (uncomment for e-ink builds)
-        <item name="android:windowAnimationStyle">@null</item>
-        <item name="android:popupBackground">#FFFFFF</item>
-        -->
+        <!-- Dialogs -->
+        <item name="alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
+        <item name="android:alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
     </style>
 </resources>   

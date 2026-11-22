@@ -237,6 +237,14 @@ public class PreferencesActivity extends Activity {
     public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreate(Bundle savedInstanceState) {
+            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+            boolean dark = prefs.getBoolean("pref_dark_mode", false);
+            boolean eink = prefs.getBoolean("pref_eink_mode", false);
+
+            AppCompatDelegate.setDefaultNightMode(
+                dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+
+            setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);   
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
 

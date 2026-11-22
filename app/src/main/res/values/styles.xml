@@ -19,7 +19,10 @@
   -->
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Dialog: border instead of shadow, no dim, black button text -->
     <style name="Theme.Fabularium.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">#000000</item>
+        <item name="android:textColorPrimary">#000000</item>
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:windowBackground">@drawable/eink_dialog_background</item>
         <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
@@ -41,15 +44,17 @@
         <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
     </style>
 
-
- <!-- Toolbar overlay: light icons on dark toolbar (light mode) -->
-<style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
-</style>   
+    <!-- Toolbar overlay: light icons on dark toolbar (light mode) -->
+    <style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    </style>
 
     <style name="Widget.Fabularium.TabLayout" parent="Widget.Design.TabLayout">
         <item name="tabRippleColor">@null</item>
     </style>
 
+    <!-- Translucent variant for GLKActivity (game screen).
+         Inherits everything from Theme.Fabularium; only overrides
+         window properties for the transparent overlay. -->
     <style name="Theme.Fabularium.Translucent" parent="Theme.Fabularium">
         <item name="android:windowContentOverlay">@null</item>
         <item name="android:windowBackground">@android:color/transparent</item>
