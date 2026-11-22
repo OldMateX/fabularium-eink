@@ -51,9 +51,9 @@
 
     <!-- Toolbar overlay: dark ink on the white toolbar. -->
     <style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Light">
-        <item name="android:textColorPrimary">@color/eink_ink</item>
+        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>   
         <item name="android:textColorSecondary">@color/eink_ink</item>
-        <item name="colorControlNormal">@color/eink_ink</item>
+        <item name="colorControlNormal">?attr/colorOnPrimary</item>
         <item name="colorControlHighlight">@color/eink_pressed</item>
     </style>
 

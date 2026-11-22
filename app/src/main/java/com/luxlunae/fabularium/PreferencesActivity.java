@@ -19,8 +19,10 @@
  */
 package com.luxlunae.fabularium;
 
+import androidx.annotation.Nullable;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import androidx.appcompat.app.AppCompatDelegate;   
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -33,7 +35,7 @@ import android.preference.PreferenceFragment;
 import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
-import androidx.annotation.Nullable;
+
 
 import java.util.Map;
 
@@ -237,6 +239,17 @@ public class PreferencesActivity extends Activity {
         public void onCreate(Bundle savedInstanceState) {
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
+
+            findPreference("pref_dark_mode").setOnPreferenceChangeListener((pref, newValue) -> {
+                AppCompatDelegate.setDefaultNightMode(
+                    (Boolean) newValue ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+                return true;
+            });
+
+            findPreference("pref_eink_mode").setOnPreferenceChangeListener((pref, newValue) -> {
+                getActivity().recreate();
+                return true;
+            });
         }
 
         @Override

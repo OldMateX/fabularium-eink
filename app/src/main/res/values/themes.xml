@@ -3,6 +3,10 @@
     <style name="Theme.Fabularium" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:windowBackground">#FFFFFF</item>
         <item name="android:popupBackground">#FFFFFF</item>
+        <!-- Toolbar: opposite of background -->
+        <item name="colorPrimary">#000000</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+
         <!-- Override colours here as you go. You want to keep windowBackground and colorPrimary the same or you may get windows flashes.
              Leave them out to use the Material3 defaults. -->
 

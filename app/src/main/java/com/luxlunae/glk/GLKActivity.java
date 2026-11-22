@@ -20,6 +20,7 @@
 package com.luxlunae.glk;
 
 import android.annotation.SuppressLint;
+import androidx.appcompat.app.AppCompatDelegate;   
 import androidx.lifecycle.ViewModelProviders;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -117,15 +118,21 @@ public class GLKActivity extends FragmentActivity
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         GLKLogger.initialise(this);
 
-		// Apply e-ink theme before super.onCreate() so it takes effect
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		if (prefs.getBoolean("pref_eink_optimised", false)) {
-			setTheme(R.style.Theme_Fabularium_EInk_Translucent);
-		}
+// Apply theme before super.onCreate()
+SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+boolean dark = prefs.getBoolean("pref_dark_mode", false);
+boolean eink = prefs.getBoolean("pref_eink_mode", false);
 
-        super.onCreate(savedInstanceState);
+AppCompatDelegate.setDefaultNightMode(
+    dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
-        Intent intent = getIntent();
+setTheme(eink ? R.style.Theme_Fabularium_EInk_Translucent : R.style.Theme_Fabularium);
+
+super.onCreate(savedInstanceState);   
+
+Intent intent = getIntent();
+
+
         String gameFormat = intent.getStringExtra(MainActivity.GAME_FORMAT);
         if (!gameFormat.equals("html")) {
             // The first time this is called it creates a new ViewModel instance

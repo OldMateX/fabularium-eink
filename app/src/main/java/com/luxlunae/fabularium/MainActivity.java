@@ -20,6 +20,7 @@
 package com.luxlunae.fabularium;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.content.SharedPreferences;
 import android.os.Build;
@@ -37,13 +38,15 @@ import androidx.core.content.ContextCompat;
 import androidx.viewpager.widget.ViewPager;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+
 import androidx.appcompat.widget.Toolbar;
-import android.view.KeyEvent;	// Added
+import android.view.KeyEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
-import android.widget.GridView;   // Added
+import android.widget.GridView;
 import android.widget.Toast;
 import androidx.preference.PreferenceManager;
 
@@ -171,101 +174,60 @@ public class MainActivity extends AppCompatActivity
             }
         }
         return null;
-    }   
+    }
 
-    /**
-     * Called when the activity is starting. This is where most initialization should go:
-     * calling setContentView(int) to inflate the activity's UI, using findViewById(int)
-     * to programmatically interact with widgets in the UI, calling
-     * managedQuery(android.net.Uri, String[], String, String[], String) to
-     * retrieve cursors for data being displayed, etc.
-     * <p>
-     * You can call finish() from within this function, in which case onDestroy()
-     * will be immediately called without any of the rest of the activity lifecycle (onStart(), onResume(), onPause(), etc) executing.
-     * <p>
-     * Derived classes must call through to the super class's implementation of this method. If they do not, an exception will be thrown.
-     * <p>
-     * This method must be called from the main thread of your app.
-     * <p>
-     * If you override this method you must call through to the superclass implementation.
-     *
-     * @param savedInstanceState -  If the activity is being re-initialized after previously being shut down
-     *                           then this Bundle contains the data it most recently supplied in
-     *                           onSaveInstanceState(Bundle). Note: Otherwise it is null.
-     */
-	@Override
-	public void onCreate(@Nullable Bundle savedInstanceState) {
-		FabLogger.initialise(this);
-		if (DEBUG_LIFECYCLE) {
-			FabLogger.debug("MainActivity: onCreate()");
-		}
-		SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-		if (prefs.getBoolean("pref_eink_optimised", false)) {
-			setTheme(R.style.Theme_Fabularium_EInk);
-		}
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.main_layout);
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        FabLogger.initialise(this);
+        if (DEBUG_LIFECYCLE) {
+            FabLogger.debug("MainActivity: onCreate()");
+        }
 
-		// Ensure we have the permissions we need
-		if (Build.VERSION.SDK_INT >= 23 &&
-				ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
-			// runtime permissions apply for Android M and above only
-			if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-				// Explain why we need the permission
-				FabLogger.warn("Displaying external storage permission rationale to provide additional context.");
+        // Apply theme before super.onCreate()
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean dark = prefs.getBoolean("pref_dark_mode", false);
+        boolean eink = prefs.getBoolean("pref_eink_mode", false);
 
-				// Show an explanation to the user *asynchronously* -- don't block
-				// this thread waiting for the user's response! After the user
-				// sees the explanation, try again to request the permission.
-				Snackbar sb = Snackbar.make(findViewById(R.id.mainContent),
-						R.string.permission_rationale_extstorage, Snackbar.LENGTH_INDEFINITE);
-				sb.setAction(R.string.dialog_ok, new View.OnClickListener() {
-					@Override
-					public void onClick(View view) {
-						ActivityCompat.requestPermissions(MainActivity.this,
-								new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
-					}
-				});
-				sb.show();
-			} else {
-				// No explanation needed, just request the permission
-				ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
-			}
-		} else {
-			copyCoreAssets();
-			createTabStrip();
-		}
-	}   
+        AppCompatDelegate.setDefaultNightMode(
+            dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
-    /**
-     * Called as part of the activity lifecycle when an activity is going into
-     * the background, but has not (yet) been killed. The counterpart to onResume().
-     * <p>
-     * When activity B is launched in front of activity A, this callback will be invoked on A.
-     * B will not be created until A's onPause() returns, so be sure to not do anything lengthy here.
-     * <p>
-     * This callback is mostly used for saving any persistent state the activity is editing,
-     * to present a "edit in place" model to the user and making sure nothing is lost if
-     * there are not enough resources to start the new activity without first killing
-     * this one. This is also a good place to do things like stop animations and other
-     * things that consume a noticeable amount of CPU in order to make the switch to the next
-     * activity as fast as possible, or to close resources that are exclusive access such as the camera.
-     * <p>
-     * In situations where the system needs more memory it may kill paused processes to reclaim
-     * resources. Because of this, you should be sure that all of your state is saved by the
-     * time you return from this function. In general onSaveInstanceState(Bundle) is used to save
-     * per-instance state in the activity and this method is used to store global persistent data
-     * (in content providers, files, etc.)
-     * <p>
-     * After receiving this call you will usually receive a following call to onStop() (after the
-     * next activity has been resumed and displayed), however in some cases there will be a
-     * direct call back to onResume() without going through the stopped state.
-     * <p>
-     * Derived classes must call through to the super class's implementation of this method.
-     * If they do not, an exception will be thrown.
-     * <p>
-     * If you override this method you must call through to the superclass implementation.
-     */
+        setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);
+
+        super.onCreate(savedInstanceState);
+        Intent intent = getIntent();
+        setContentView(R.layout.main_layout);
+
+        // Ensure we have the permissions we need
+        if (Build.VERSION.SDK_INT >= 23 &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            // runtime permissions apply for Android M and above only
+            if (ActivityCompat.shouldShowRequestPermissionRationale(this, Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                // Explain why we need the permission
+                FabLogger.warn("Displaying external storage permission rationale to provide additional context.");
+
+                // Show an explanation to the user *asynchronously* -- don't block
+                // this thread waiting for the user's response! After the user
+                // sees the explanation, try again to request the permission.
+                Snackbar sb = Snackbar.make(findViewById(R.id.mainContent),
+                        R.string.permission_rationale_extstorage, Snackbar.LENGTH_INDEFINITE);
+                sb.setAction(R.string.dialog_ok, new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        ActivityCompat.requestPermissions(MainActivity.this,
+                                new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
+                    }
+                });
+                sb.show();
+            } else {
+                // No explanation needed, just request the permission
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_EXT_STORAGE);
+            }
+        } else {
+            copyCoreAssets();
+            createTabStrip();
+        }
+    }
+
     @Override
     public void onPause() {
         if (DEBUG_LIFECYCLE) {
@@ -275,15 +237,17 @@ public class MainActivity extends AppCompatActivity
         super.onPause();
     }
 
-    /**
-     * Called when you are no longer visible to the user. You will next receive
-     * either onRestart(), onDestroy(), or nothing, depending on later user activity.
-     * <p>
-     * Derived classes must call through to the super class's implementation of this
-     * method. If they do not, an exception will be thrown.
-     * <p>
-     * If you override this method you must call through to the superclass implementation.
-     */
+    @Override
+    public void onResume() {
+        super.onResume();
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean dark = prefs.getBoolean("pref_dark_mode", false);
+        int expected = dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO;
+        if (AppCompatDelegate.getDefaultNightMode() != expected) {
+            AppCompatDelegate.setDefaultNightMode(expected);
+        }
+    }   
+
     @Override
     public void onStop() {
         if (DEBUG_LIFECYCLE) {
@@ -293,27 +257,6 @@ public class MainActivity extends AppCompatActivity
         super.onStop();
     }
 
-    /**
-     * Perform any final cleanup before an activity is destroyed. This can happen either
-     * because the activity is finishing (someone called finish() on it, or because the
-     * system is temporarily destroying this instance of the activity to save space. You
-     * can distinguish between these two scenarios with the isFinishing() method.
-     * <p>
-     * Note: do not count on this method being called as a place for saving data! For
-     * example, if an activity is editing data in a content provider, those edits
-     * should be committed in either onPause() or onSaveInstanceState(Bundle), not here.
-     * This method is usually implemented to free resources like threads that are
-     * associated with an activity, so that a destroyed activity does not leave such
-     * things around while the rest of its application is still running. There are
-     * situations where the system will simply kill the activity's hosting process
-     * without calling this method (or any others) in it, so it should not be used to
-     * do things that are intended to remain around after the process goes away.
-     * <p>
-     * Derived classes must call through to the super class's implementation of this
-     * method. If they do not, an exception will be thrown.
-     * <p>
-     * If you override this method you must call through to the superclass implementation.
-     */
     @Override
     public void onDestroy() {
         if (DEBUG_LIFECYCLE) {
@@ -323,9 +266,6 @@ public class MainActivity extends AppCompatActivity
         super.onDestroy();
     }
 
-    /**
-     * Callback received when a permissions request has been completed.
-     */
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         if (requestCode == REQUEST_EXT_STORAGE) {
@@ -373,7 +313,6 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onCopyAssetsPostExecute(@Nullable File[] results) {
-
     }
 
     public void copyCoreAssets() {
@@ -573,4 +512,4 @@ public class MainActivity extends AppCompatActivity
             }
         }
     }
-}
+}   

@@ -17,7 +17,25 @@
   ~ along with Fabularium; if not, write to the Free Software
   ~ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
   -->
+
 <PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceScreen android:title="App Appearance">
+        <SwitchPreference
+            android:defaultValue="0"
+            android:key="pref_dark_mode"
+            android:summary="Switch the app chrome to a dark background."
+            android:title="Dark mode" />
+        <SwitchPreference
+            android:defaultValue="0"
+            android:key="pref_eink_mode"
+            android:summary="High-contrast B&amp;W theme with no animations or shadows. Optimised for e-ink displays."
+            android:title="E-ink mode" />
+        <SwitchPreference
+            android:defaultValue="0"
+            android:key="pref_gestures_enabled"
+            android:summary="Enable two-finger swipe gestures for directions in the game window."
+            android:title="Gesture shortcuts" />
+    </PreferenceScreen>
     <PreferenceScreen android:title="Typography">
         <PreferenceCategory android:title="Main Screen">
             <EditTextPreference
