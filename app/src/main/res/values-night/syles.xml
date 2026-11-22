@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Toolbar overlay: dark icons on light toolbar (dark mode) -->
+    <style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Light">
+    </style>
+</resources>

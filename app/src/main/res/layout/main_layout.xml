@@ -61,7 +61,9 @@
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:theme="@style/ThemeOverlay.Fabularium.Toolbar"
-            app:popupTheme="@style/Theme.Fabularium" />
+            app:popupTheme="@style/Theme.Fabularium"
+            app:navigationIconTint="?attr/colorOnPrimary" />
+            
 
     </LinearLayout>
 

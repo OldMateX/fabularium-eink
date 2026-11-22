@@ -25,8 +25,9 @@
     <item
         android:id="@+id/projaction_refresh"
         android:icon="@drawable/ic_refresh_black_24dp"
+        app:iconTint="@color/toolbar_icon_tint"
         android:title="@string/menu_refresh_db"
-        app:showAsAction="ifRoom" />
+        app:showAsAction="always" />   
 
     <!-- Settings, should always be in the overflow -->
     <item

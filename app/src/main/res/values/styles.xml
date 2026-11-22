@@ -20,15 +20,7 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <style name="Theme.Fabularium.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">@color/eink_ink</item>
-        <item name="colorControlNormal">@color/eink_ink</item>
-        <item name="colorControlActivated">@color/eink_ink</item>
-        <item name="colorControlHighlight">@color/eink_pressed</item>
-        <item name="android:textColorPrimary">@color/eink_ink</item>
-        <item name="android:textColorSecondary">@color/eink_ink_secondary</item>
-        <item name="android:textColor">@color/eink_ink</item>
         <item name="android:windowAnimationStyle">@null</item>
-        <!-- Border instead of shadow; no grey dim behind the dialog. -->
         <item name="android:windowBackground">@drawable/eink_dialog_background</item>
         <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
         <item name="android:backgroundDimEnabled">false</item>
@@ -49,19 +41,12 @@
         <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
     </style>
 
-    <!-- Toolbar overlay: dark ink on the white toolbar. -->
-    <style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Light">
-        <item name="android:textColorPrimary">?attr/colorOnPrimary</item>   
-        <item name="android:textColorSecondary">@color/eink_ink</item>
-        <item name="colorControlNormal">?attr/colorOnPrimary</item>
-        <item name="colorControlHighlight">@color/eink_pressed</item>
-    </style>
+
+ <!-- Toolbar overlay: light icons on dark toolbar (light mode) -->
+<style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+</style>   
 
     <style name="Widget.Fabularium.TabLayout" parent="Widget.Design.TabLayout">
-        <item name="tabTextColor">@color/eink_ink_secondary</item>
-        <item name="tabSelectedTextColor">@color/eink_ink</item>
-        <item name="tabIndicatorColor">@color/eink_ink</item>
-        <item name="tabIndicatorHeight">4dp</item>
         <item name="tabRippleColor">@null</item>
     </style>
 
@@ -93,7 +78,7 @@
         <!-- Size of the text for character keys. -->
         <attr name="keyTextSize" format="dimension" />
 
-        <!-- Size of the text for custom keys with some text and no icon. -->
+        <!-- Size of the text for custom keys with some text or no icon. -->
         <attr name="labelTextSize" format="dimension" />
 
         <!-- Color to use for the label in a key. -->
@@ -102,7 +87,7 @@
         <!-- Layout resource for key press feedback.-->
         <attr name="keyPreviewLayout" format="reference" />
 
-        <!-- Vertical offset of the key press feedback from the key. -->
+        <!-- Vertical offset for the key press feedback, for bias correction. -->
         <attr name="keyPreviewOffset" format="dimension" />
 
         <!-- Height of the key press feedback popup. -->
@@ -158,19 +143,19 @@
         <!-- Key edge flags. -->
         <attr name="keyEdgeFlags">
             <!-- Key is anchored to the left of the keyboard. -->
-            <flag name="left" value="1" />
+            <flag name="left" value="4" />
             <!-- Key is anchored to the right of the keyboard. -->
-            <flag name="right" value="2" />
+            <flag name="right" value="8" />
         </attr>
         <!-- Whether this is a modifier key such as Alt or Shift. -->
         <attr name="isModifier" format="boolean" />
         <!-- Whether this is a toggle key. -->
         <attr name="isSticky" format="boolean" />
-        <!-- Whether long-pressing on this key will make it repeat. -->
+        <!-- Whether long-pressing on the key will make it repeat. -->
         <attr name="isRepeatable" format="boolean" />
         <!-- The icon to show in the popup preview. -->
         <attr name="iconPreview" format="reference" />
-        <!-- The string of characters to output when this key is pressed. -->
+        <!-- The string of characters to output when the key is pressed. -->
         <attr name="keyOutputText" format="string" />
         <!-- The label to display on the key. -->
         <attr name="keyLabel" format="string" />
@@ -183,4 +168,4 @@
 
     <dimen name="alert_def_padding">18dp</dimen>
 
-</resources>
+</resources>   

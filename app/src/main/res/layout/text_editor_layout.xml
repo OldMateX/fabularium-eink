@@ -29,7 +29,8 @@
         android:layout_height="?attr/actionBarSize"
         android:background="?attr/colorPrimary"
         android:theme="@style/ThemeOverlay.Fabularium.Toolbar"
-        app:popupTheme="@style/Theme.Fabularium" />
+        app:popupTheme="@style/Theme.Fabularium"
+        app:navigationIconTint="?attr/colorOnPrimary" />
 
     <!-- E-ink: a solid rule separates the toolbar (no elevation shadow). -->
     <View
