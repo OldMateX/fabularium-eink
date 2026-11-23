@@ -22,7 +22,7 @@ package com.luxlunae.fabularium;
 import androidx.annotation.Nullable;
 import android.annotation.SuppressLint;
 import android.app.Activity;
-import androidx.appcompat.app.AppCompatDelegate;   
+import androidx.appcompat.app.AppCompatDelegate;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
@@ -36,12 +36,11 @@ import android.preference.PreferenceGroup;
 import android.preference.PreferenceManager;
 import android.preference.SwitchPreference;
 
-
 import java.util.Map;
 
 public class PreferencesActivity extends Activity {
     public static final String KEY_PREF_BYTE_ORDER = "pref_byteOrder";
-    public static final String KEY_PREF_DEFAULT_CHARSET = "pref_defCharset";
+    public static final String KEY_PREF_DEFAULT_CHARSET = "pref_defaultCharset";
 
     public static final String KEY_PREF_CURSOR_WIDTH = "pref_cursorWidth";
 
@@ -124,27 +123,15 @@ public class PreferencesActivity extends Activity {
     public static final String KEY_PREF_FONTS_PATH = "pref_fileMgmtFontsPath";
 
     /**
-     * Called when the activity is starting. This is where most initialization should go:
-     * calling setContentView(int) to inflate the activity's UI, using findViewById(int)
-     * to programmatically interact with widgets in the UI, calling
-     * managedQuery(android.net.Uri, String[], String, String[], String) to
-     * retrieve cursors for data being displayed, etc.
-     * <p>
-     * You can call finish() from within this function, in which case onDestroy()
-     * will be immediately called without any of the rest of the activity lifecycle (onStart(), onResume(), onPause(), etc) executing.
-     * <p>
-     * Derived classes must call through to the super class's implementation of this method. If they do not, an exception will be thrown.
-     * <p>
-     * This method must be called from the main thread of your app.
-     * <p>
-     * If you override this method you must call through to the superclass implementation.
-     *
-     * @param savedInstanceState -  If the activity is being re-initialized after previously being shut down
-     *                           then this Bundle contains the data it most recently supplied in
-     *                           onSaveInstanceState(Bundle). Note: Otherwise it is null.
+     * Called when the activity is starting.
      */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // Apply theme before super.onCreate() so it takes effect
+        SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
+        boolean eink = prefs.getBoolean("pref_eink_mode", false);
+        setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);
+
         super.onCreate(savedInstanceState);
         getFragmentManager().beginTransaction()
                 .replace(android.R.id.content, new SettingsFragment())
@@ -237,23 +224,18 @@ public class PreferencesActivity extends Activity {
     public static class SettingsFragment extends PreferenceFragment implements SharedPreferences.OnSharedPreferenceChangeListener {
         @Override
         public void onCreate(Bundle savedInstanceState) {
-            SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-            boolean dark = prefs.getBoolean("pref_dark_mode", false);
-            boolean eink = prefs.getBoolean("pref_eink_mode", false);
-
-            AppCompatDelegate.setDefaultNightMode(
-                dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
-
-            setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);   
             super.onCreate(savedInstanceState);
             addPreferencesFromResource(R.xml.preferences);
 
+            // Dark mode: sets global night mode + recreates activity to pick up new theme
             findPreference("pref_dark_mode").setOnPreferenceChangeListener((pref, newValue) -> {
                 AppCompatDelegate.setDefaultNightMode(
                     (Boolean) newValue ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
+                getActivity().recreate();
                 return true;
             });
 
+            // E-ink: recreates activity so onCreate() re-reads the pref and applies the right theme
             findPreference("pref_eink_mode").setOnPreferenceChangeListener((pref, newValue) -> {
                 getActivity().recreate();
                 return true;
@@ -306,4 +288,4 @@ public class PreferencesActivity extends Activity {
             preference.setSummary(sharedPrefs.getString(key, "Default"));
         }
     }
-}
+}   
