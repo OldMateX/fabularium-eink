@@ -192,6 +192,9 @@ public class MainActivity extends AppCompatActivity
             dark ? AppCompatDelegate.MODE_NIGHT_YES : AppCompatDelegate.MODE_NIGHT_NO);
 
         setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);
+        if (eink) {
+            getWindow().setWindowAnimations(0);
+        }   
 
         super.onCreate(savedInstanceState);
         Intent intent = getIntent();
@@ -342,6 +345,9 @@ public class MainActivity extends AppCompatActivity
         mAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         mPager = findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
+
+
+
         mPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
             @Override
             public void onPageSelected(int position) {
@@ -356,6 +362,7 @@ public class MainActivity extends AppCompatActivity
                 mTabCurPos = position;
             }
         });
+
         TabLayout tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mPager);
 
@@ -368,7 +375,7 @@ public class MainActivity extends AppCompatActivity
 
         // Initialise default preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
-    }
+    }   
 
     @NonNull
     public Fragment getTab(int pos) {

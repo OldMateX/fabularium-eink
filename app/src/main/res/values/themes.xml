@@ -4,31 +4,15 @@
         <item name="android:windowBackground">#FFFFFF</item>
         <item name="android:popupBackground">#FFFFFF</item>
         <item name="alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
-        <item name="android:alertDialogTheme">@style/Theme.Fabularium.Dialog</item>   
-        <item name="android:colorBackground">#FFFFFF</item>   
-        <item name="colorSurface">#FFFFFF</item>   
-        <!-- Toolbar: opposite of background -->
+        <item name="android:alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorSurfaceContainer">#FFFFFF</item>
+        <item name="colorSurfaceContainerLow">#FFFFFF</item>
+        <item name="colorSurfaceContainerHigh">#FFFFFF</item>
+
         <item name="colorPrimary">#000000</item>
         <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="colorAccent">#000000</item>   
-
-        <!-- Override colours here as you go. You want to keep windowBackground and colorPrimary the same or you may get windows flashes.
-             Leave them out to use the Material3 defaults. -->
-
-        <!-- Example overrides (uncomment and adjust):
-        <item name="colorPrimary">#1B5E20</item>
-        <item name="colorOnPrimary">#FFFFFF</item>
-        <item name="android:windowBackground">#FFFFFF</item>        
-        <item name="colorSecondary">#2E7D32</item>
-        <item name="colorOnSecondary">#FFFFFF</item>
-        <item name="android:windowBackground">#FFFFFF</item>
-        <item name="android:textColorPrimary">#000000</item>
-        <item name="android:textColorSecondary">#424242</item>
-        -->
-
-        <!-- E-ink: kill animations (uncomment for e-ink builds)
-        <item name="android:windowAnimationStyle">@null</item>
-        <item name="android:popupBackground">#FFFFFF</item>
-        -->
+        <item name="colorAccent">#000000</item>
     </style>
 </resources>   

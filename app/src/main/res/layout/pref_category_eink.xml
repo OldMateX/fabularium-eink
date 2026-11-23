@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Custom layout for PreferenceCategory headers in settings sub-screens.
+
+    Replaces the default platform header (which renders as a solid black bar
+    on e-ink devices like the Onyx Boox Flow).
+
+    Uses theme attributes (?android:attr/colorBackground and
+    ?android:attr/textColorPrimary) so it auto-adapts to day/night and
+    e-ink mode without needing a separate -night layout file.
+
+    The android:id MUST be @android:id/title — the framework looks for
+    this exact ID to fill in the category name (e.g. "Windows", "Cursor").
+-->
+<TextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/title"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:attr/colorBackground"
+    android:textColor="?android:attr/textColorPrimary"
+    android:textStyle="bold"
+    android:paddingLeft="16dp"
+    android:paddingTop="8dp"
+    android:paddingBottom="4dp"
+    android:textSize="14sp" />   

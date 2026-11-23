@@ -35,7 +35,7 @@
             android:key="pref_gestures_enabled"
             android:summary="Enable two-finger swipe gestures for directions in the game window."
             android:title="Gesture shortcuts" />
-    </PreferenceScreen>
+    </PreferenceScreen>   
     <PreferenceScreen android:title="Typography">
         <PreferenceCategory android:title="Main Screen">
             <EditTextPreference
