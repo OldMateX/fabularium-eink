@@ -40,6 +40,16 @@
         <!-- Older Material accent — links, progress bars -->
         <item name="colorAccent">#FFFFFF</item>
 
+
+        <!-- Text/icons on Material3 surfaces (preference items, cards, dialogs) -->
+        <item name="colorOnSurface">#FFFFFF</item>
+
+        <!-- Text/icons on the app background -->
+        <item name="colorOnBackground">#FFFFFF</item>
+
+        <!-- Text/icons on surface-variant elements (chips, dividers, etc.) -->
+        <item name="colorOnSurfaceVariant">#CCCCCC</item>   
+
         <!-- === KILL ANIMATIONS === -->
 
         <!-- Activity open/close transitions (slide, fade, zoom) -->
@@ -99,5 +109,15 @@
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:background">#000000</item>
         <item name="android:windowBackground">#000000</item>
-    </style>
+
+        <item name="colorSurface">#000000</item>
+        <item name="colorSurfaceContainer">#000000</item>
+        <item name="colorSurfaceContainerLow">#000000</item>
+        <item name="colorSurfaceContainerHigh">#000000</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="colorOnBackground">#FFFFFF</item>
+        <item name="colorOnSurfaceVariant">#CCCCCC</item>
+    </style>   
+
+
 </resources>   

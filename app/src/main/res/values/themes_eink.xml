@@ -28,6 +28,15 @@
         <!-- Main body text, titles, headings -->
         <item name="android:textColorPrimary">#000000</item>
 
+        <!-- Text/icons on Material3 surfaces (preference items, cards, dialogs) -->
+        <item name="colorOnSurface">#000000</item>
+
+        <!-- Text/icons on the app background -->
+        <item name="colorOnBackground">#000000</item>
+
+        <!-- Text/icons on surface-variant elements (chips, dividers, etc.) -->
+        <item name="colorOnSurfaceVariant">#333333</item>   
+
         <!-- Subtitles, summaries, helper text -->
         <item name="android:textColorSecondary">#333333</item>
 
@@ -95,9 +104,20 @@
         Applied to all dialogs including the nested PreferenceScreen sub-screens
         (when you tap "Windows", "Typography", etc. in settings).
     -->
+
     <style name="Theme.Fabularium.EInk.Dialog" parent="Theme.Fabularium.Dialog">
         <item name="android:windowAnimationStyle">@null</item>
         <item name="android:background">#FFFFFF</item>
         <item name="android:windowBackground">#FFFFFF</item>
-    </style>
+
+        <!-- Material3 colour overrides (dialog inherits these, not the eink theme) -->
+        <item name="colorSurface">#FFFFFF</item>
+        <item name="colorSurfaceContainer">#FFFFFF</item>
+        <item name="colorSurfaceContainerLow">#FFFFFF</item>
+        <item name="colorSurfaceContainerHigh">#FFFFFF</item>
+        <item name="colorOnSurface">#000000</item>
+        <item name="colorOnBackground">#000000</item>
+        <item name="colorOnSurfaceVariant">#333333</item>
+    </style>   
+
 </resources>   

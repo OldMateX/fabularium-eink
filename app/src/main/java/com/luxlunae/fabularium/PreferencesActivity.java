@@ -116,7 +116,7 @@ public class PreferencesActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean eink = prefs.getBoolean("pref_eink_mode", false);
+        boolean eink = prefs.getBoolean("pref_eink_mode", true);   
         setTheme(eink ? R.style.Theme_Fabularium_EInk : R.style.Theme_Fabularium);
 
         super.onCreate(savedInstanceState);
@@ -314,12 +314,22 @@ public class PreferencesActivity extends Activity {
             super.onPreferenceTreeClick(preferenceScreen, preference);
 
             if (preference instanceof PreferenceScreen) {
-                getView().postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        paintListBackgrounds(getActivity().getWindow().getDecorView());
-                    }
-                }, 300);
+                // The nested screen opens in its OWN dialog window,
+                // NOT inside the activity's window. We must walk
+                // the dialog's decor view, not the activity's.
+                final android.app.Dialog dialog =
+                    ((PreferenceScreen) preference).getDialog();
+                if (dialog != null) {
+                    getView().postDelayed(new Runnable() {
+                        @Override
+                        public void run() {
+                            if (dialog.getWindow() != null) {
+                                paintListBackgrounds(
+                                    dialog.getWindow().getDecorView());
+                            }
+                        }
+                    }, 300);
+                }
             }
             return true;
         }   
@@ -329,22 +339,45 @@ public class PreferencesActivity extends Activity {
          * the theme's colorBackground. Brute-force fix for e-ink devices
          * where the platform ignores theme attributes on dialog ListViews.
          */
+        /**
+         * Recursively walks a view tree and forces backgrounds AND text
+         * colours on every relevant view. Brute-force fix for e-ink
+         * devices (especially Boox) where the platform ignores theme
+         * attributes on dialog ListViews and TextViews.
+         */
         private void paintListBackgrounds(View view) {
             if (view == null) return;
 
-            TypedValue tv = new TypedValue();
-            getActivity().getTheme().resolveAttribute(android.R.attr.colorBackground, tv, true);
-            int bgColor = 0xFFFFFFFF;
-            if (tv.type >= TypedValue.TYPE_FIRST_COLOR_INT && tv.type <= TypedValue.TYPE_LAST_COLOR_INT) {
-                bgColor = tv.data;
-            }
+            // Determine correct colours based on current night mode
+            boolean isNight = (getResources().getConfiguration().uiMode
+                & android.content.res.Configuration.UI_MODE_NIGHT_MASK)
+                == android.content.res.Configuration.UI_MODE_NIGHT_YES;   
+
+            int bgColor = isNight ? 0xFF000000 : 0xFFFFFFFF;
+            int textColor = isNight ? 0xFFFFFFFF : 0xFF000000;
+            int secondaryTextColor = isNight ? 0xFFCCCCCC : 0xFF333333;
 
             if (view instanceof android.widget.ListView) {
                 view.setBackgroundColor(bgColor);
             }
             if (view instanceof android.widget.FrameLayout) {
-                // The dialog's content frame — paint it too
                 view.setBackgroundColor(bgColor);
+            }
+            if (view instanceof android.widget.TextView) {
+                android.widget.TextView tv = (android.widget.TextView) view;
+                // Force readable text on any TextView in the dialog
+                int currentColor = tv.getCurrentTextColor();
+                // If text is the same as background (invisible), fix it
+                if (currentColor == bgColor) {
+                    tv.setTextColor(textColor);
+                }
+            }
+            if (view instanceof android.widget.EditText) {
+                android.widget.EditText et = (android.widget.EditText) view;
+                int currentColor = et.getCurrentTextColor();
+                if (currentColor == bgColor) {
+                    et.setTextColor(textColor);
+                }
             }
             if (view instanceof ViewGroup) {
                 ViewGroup group = (ViewGroup) view;
@@ -352,6 +385,6 @@ public class PreferencesActivity extends Activity {
                     paintListBackgrounds(group.getChildAt(i));
                 }
             }
-        }
-    }
+        }   
+    }   
 }   
