@@ -6,6 +6,9 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <style name="Theme.Fabularium.EInk" parent="Theme.Fabularium">
 
+        <!-- Kill Material3's elevation tint (the grey overlay on popups/cards) -->
+        <item name="elevationOverlayEnabled">false</item>   
+
         <!-- === COLOURS === -->
 
         <!-- Background of the overflow popup (the 3-dot menu) -->
@@ -53,34 +56,29 @@
         <!-- Text/icons on surface-variant elements (chips, dividers, etc.) -->
         <item name="colorOnSurfaceVariant">#CCCCCC</item>   
 
-        <!-- === KILL ANIMATIONS === -->
+        <!-- === KILL ALL ANIMATIONS, RIPPLES, SHADOWS === -->
 
-        <!-- Activity open/close transitions (slide, fade, zoom) -->
+        <!-- Activity open/close transitions -->
         <item name="android:windowAnimationStyle">@null</item>
 
-        <!-- === KILL ELEVATION / SHADOWS === -->
+        <!-- Layout change animations -->
+        <item name="android:animateLayoutChanges">false</item>
 
-        <!-- Drop shadow depth on all Material views -->
-        <item name="android:elevation">0dp</item>
+        <!-- Shared element / content transitions -->
+        <item name="android:windowContentTransitions">false</item>
 
-        <!-- Window-level shadow -->
-        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
+        <!-- Ripple / touch feedback (fully transparent) -->
+        <item name="android:colorControlHighlight">#00000000</item>
+        <item name="android:selectableItemBackground">@null</item>
+        <item name="android:selectableItemBackgroundBorderless">@null</item>
 
-        <!-- === KILL BUTTON "LIFT" === -->
-
-        <!-- The animation where a button rises up when pressed -->
+        <!-- Button "lift" on press -->
         <item name="android:stateListAnimator">@null</item>
 
-        <!-- === KILL RIPPLE === -->
-
-        <!-- The faint flash when you tap something (white flash on black bg) -->
-        <item name="android:colorControlHighlight">#33FFFFFF</item>
-
-        <!-- What plays when you tap a list item, button, or tab. @null = nothing -->
-        <item name="android:selectableItemBackground">@null</item>
-
-        <!-- Same but for borderless items. @null = nothing -->
-        <item name="android:selectableItemBackgroundBorderless">@null</item>
+        <!-- Shadows and elevation -->
+        <item name="android:elevation">0dp</item>
+        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="elevationOverlayEnabled">false</item>   
 
         <!-- === DIALOGS === -->
 

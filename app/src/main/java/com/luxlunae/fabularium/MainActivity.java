@@ -341,10 +341,20 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createTabStrip() {
-        // Set up the tab strip
+        // Set up the tab strip        
         mAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         mPager = findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
+        // Kill the ViewPager slide: make page changes instant
+        mPager.setOnTouchListener(new android.view.View.OnTouchListener() {
+            @Override
+            public boolean onTouch(android.view.View v, android.view.MotionEvent event) {
+                if (event.getAction() == android.view.MotionEvent.ACTION_MOVE) {
+                    return true; // Block horizontal drag
+                }
+                return false;
+            }
+        });   
 
 
 
@@ -369,9 +379,9 @@ public class MainActivity extends AppCompatActivity
         // Set up the toolbar
         mToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(mToolbar);
-        mToolbarCheckBox = findViewById(R.id.my_toolbar_chkbox);
-        mToolbarButOK = findViewById(R.id.my_toolbar_butOK);
-        mToolbarButCancel = findViewById(R.id.my_toolbar_butCancel);
+        // Force the popup to use the eink theme directly.
+        // Bypasses Material3's internal popup theme resolution.
+        mToolbar.setPopupTheme(R.style.Theme_Fabularium_EInk);   
 
         // Initialise default preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
