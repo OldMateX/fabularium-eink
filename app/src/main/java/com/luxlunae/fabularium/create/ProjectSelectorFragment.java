@@ -220,66 +220,48 @@ public class ProjectSelectorFragment extends Fragment
      * @param menu - The options menu in which you place your items.
      * @param inflater - The inflater.
      */
-    @Override
-    public void onCreateOptionsMenu(@NonNull Menu menu, @NonNull MenuInflater inflater) {
-        inflater.inflate(R.menu.projsel, menu);
-        super.onCreateOptionsMenu(menu, inflater);
-    }
-
-    /**
-     * This hook is called whenever an item in your options menu is selected. The default
-     * implementation simply returns false to have the normal processing happen (calling the
-     * item's Runnable or sending a message to its Handler as appropriate). You can use this
-     * method for any items for which you would like to do processing without those other facilities.
-     * <p>
-     * Derived classes should call through to the base class for it to perform the default menu handling.
-     *
-     * @param item - The menu item that was selected.
-     * @return Return false to allow normal menu processing to proceed, true to consume it here.
-     */
-    @Override
-    public boolean onOptionsItemSelected(@NonNull MenuItem item) {
-        final FragmentActivity act = getActivity();
-        if (act == null || act.isFinishing()) {
-            FabLogger.error("ProjectSelectorFragment: cannot retrieve parent activity or activity is finishing, onOptionsItemSelected aborted.");
-            return false;
+        @Override
+        public void onCreateOptionsMenu(android.view.Menu menu, android.view.MenuInflater inflater) {
+            inflater.inflate(R.menu.gamesel, menu);
+            super.onCreateOptionsMenu(menu, inflater);
         }
 
-        switch (item.getItemId()) {
-            case R.id.projaction_refresh: {
-                // Refresh the database
-                AsyncProgressFragment frag = new AsyncProgressFragment();
-                act.getSupportFragmentManager().beginTransaction().add(frag, DB_REFRESH_TAG).commit();
-                try {
-                    File projectsDir = new File(GLKConstants.getDir(act, GLKConstants.SUBDIR.PROJECTS));
-                    frag.refreshDatabase(act.getResources(), act, mDbHelper, projectsDir, this);
-                } catch (@NonNull IOException | SecurityException e) {
-                    FabLogger.error("  => Could not access projects directory. Please check you have granted file read/write permissions and try again. If you have overridden the default paths in your settings, also check that Fabularium has read/write access to that path.");
+        @Override
+        public boolean onOptionsItemSelected(@NonNull MenuItem item) {
+            final FragmentActivity act = getActivity();
+            if (act == null || act.isFinishing()) {
+                FabLogger.error("ProjectSelectorFragment: cannot retrieve parent activity or activity is finishing, onOptionsItemSelected aborted.");
+                return false;
+            }
+            switch (item.getItemId()) {
+                case R.id.action_settings: {
+                    android.widget.Toast.makeText(act, "Settings tapped", android.widget.Toast.LENGTH_SHORT).show();
+                    Intent i = new Intent(act, com.luxlunae.fabularium.PreferencesActivity.class);
+                    startActivity(i);
+                    return true;
                 }
-                return true;
+                case R.id.projaction_refresh: {
+                    // Refresh the database
+                    AsyncProgressFragment frag = new AsyncProgressFragment();
+                    act.getSupportFragmentManager().beginTransaction().add(frag, DB_REFRESH_TAG).commit();
+                    try {
+                        File projectsDir = new File(GLKConstants.getDir(act, GLKConstants.SUBDIR.PROJECTS));
+                        frag.refreshDatabase(act.getResources(), act, mDbHelper, projectsDir, this);
+                    } catch (@NonNull IOException | SecurityException e) {
+                        FabLogger.error("  => Could not access projects directory. Please check you have granted file read/write permissions and try again. If you have overridden the default paths in your settings, also check that Fabularium has read/write access to that path.");
+                    }
+                    return true;
+                }
+                case R.id.projaction_help: {
+                    UrlDialogFragment dialog = UrlDialogFragment.newInstance();
+                    dialog.setUrl(getString(R.string.html_help_path_EN)).setTitle(getString(R.string.dialog_help_title));
+                    dialog.show(act.getSupportFragmentManager(), URL_DIALOG_TAG);
+                    return true;
+                }
+                default:
+                    return super.onOptionsItemSelected(item);
             }
-
-            case R.id.projaction_licenses: {
-                // Show information about the other components
-                UrlDialogFragment dialog = UrlDialogFragment.newInstance();
-                dialog.setUrl(getString(R.string.html_licences_path_EN)).setTitle(getString(R.string.dialog_licences_title));
-                dialog.show(act.getSupportFragmentManager(), URL_DIALOG_TAG);
-                return true;
-            }
-
-            case R.id.projaction_help: {
-                UrlDialogFragment dialog = UrlDialogFragment.newInstance();
-                dialog.setUrl(getString(R.string.html_help_path_EN)).setTitle(getString(R.string.dialog_help_title));
-                dialog.show(act.getSupportFragmentManager(), URL_DIALOG_TAG);
-                return true;
-            }
-
-            default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
-                return super.onOptionsItemSelected(item);
-        }
-    }
+        }   
 
     /**
      * Callback method to be invoked when an item in this AdapterView has been clicked.
@@ -300,9 +282,6 @@ public class ProjectSelectorFragment extends Fragment
         ProjectDbHelper.ProjectRecord pr = ProjectDbHelper.get(projid, dbReader);
         dbReader.close();
         if (pr == null) {
-            Toast.makeText(getActivity(),
-                    "Cannot find project " + projid + " in the database.  You need to refresh it.",
-                    Toast.LENGTH_LONG).show();
             return;
         }
         Intent intent = new Intent(getActivity(), TextEditorActivity.class);

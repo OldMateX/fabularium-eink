@@ -15,4 +15,12 @@
         <item name="colorOnPrimary">#FFFFFF</item>
         <item name="colorAccent">#000000</item>
     </style>
+
+    <style name="ThemeOverlay.Fabularium.Popup" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:colorBackground">#FFFFFF</item>
+        <item name="android:textColorPrimary">#000000</item>
+        <item name="android:textColorSecondary">#333333</item>
+        <item name="android:popupBackground">@drawable/eink_popup_background</item>
+    </style>   
+
 </resources>   

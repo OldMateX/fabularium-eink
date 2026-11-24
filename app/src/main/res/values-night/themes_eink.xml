@@ -8,6 +8,9 @@
 
         <!-- === COLOURS === -->
 
+        <!-- Background of the overflow popup (the 3-dot menu) -->
+        <item name="colorBackgroundFloating">#000000</item>   
+
         <!-- Background of the entire app window -->
         <item name="android:windowBackground">#000000</item>
 
@@ -87,12 +90,12 @@
 
         <!-- === POPUP MENUS (the 3-dot menu) === -->
 
-        <item name="popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
-        <item name="android:popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
-        <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.PopupMenu.Overflow</item>
-        <item name="listPopupWindowStyle">@style/Widget.Fabularium.ListPopupWindow</item>
-        <item name="android:listPopupWindowStyle">@style/Widget.Fabularium.ListPopupWindow</item>
-    </style>
+        <item name="popupMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu</item>
+        <item name="android:popupMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu.Overflow</item>
+        <item name="listPopupWindowStyle">@style/Widget.Fabularium.EInk.ListPopupWindow</item>
+        <item name="android:listPopupWindowStyle">@style/Widget.Fabularium.EInk.ListPopupWindow</item>   
+    </style>   
 
     <!-- Transparent window variant (for splash screens, etc.) -->
     <style name="Theme.Fabularium.EInk.Translucent" parent="Theme.Fabularium.EInk">
@@ -119,5 +122,32 @@
         <item name="colorOnSurfaceVariant">#CCCCCC</item>
     </style>   
 
+    <!-- E-ink popup menus (night): pure black, white text, white border -->
+    <style name="Widget.Fabularium.EInk.PopupMenu" parent="Widget.AppCompat.PopupMenu">
+        <item name="android:background">#000000</item>
+        <item name="android:popupBackground">@drawable/eink_popup_background</item>
+        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#CCCCCC</item>
+    </style>
+
+    <style name="Widget.Fabularium.EInk.PopupMenu.Overflow" parent="Widget.AppCompat.PopupMenu.Overflow">
+        <item name="android:background">#000000</item>
+        <item name="android:popupBackground">@drawable/eink_popup_background</item>
+        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#CCCCCC</item>
+    </style>
+
+    <style name="Widget.Fabularium.EInk.ListPopupWindow" parent="Widget.AppCompat.ListPopupWindow">
+        <item name="android:background">#000000</item>
+        <item name="android:popupBackground">@drawable/eink_popup_background</item>
+        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:colorBackground">#000000</item>
+        <item name="android:textColorPrimary">#FFFFFF</item>
+        <item name="android:textColorSecondary">#CCCCCC</item>
+    </style>   
 
 </resources>   

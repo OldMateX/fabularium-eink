@@ -30,16 +30,19 @@
     </style>
 
     <style name="Widget.Fabularium.PopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
+    <item name="android:background">?android:attr/colorBackground</item>
         <item name="android:popupBackground">@drawable/eink_popup_background</item>
         <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
     </style>
 
     <style name="Widget.Fabularium.PopupMenu.Overflow" parent="Widget.AppCompat.Light.PopupMenu.Overflow">
+    <item name="android:background">?android:attr/colorBackground</item>
         <item name="android:popupBackground">@drawable/eink_popup_background</item>
         <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
     </style>
 
     <style name="Widget.Fabularium.ListPopupWindow" parent="Widget.AppCompat.Light.ListPopupWindow">
+    <item name="android:background">?android:attr/colorBackground</item>
         <item name="android:popupBackground">@drawable/eink_popup_background</item>
         <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
     </style>
