@@ -114,6 +114,12 @@ public class PreferencesActivity extends Activity {
     public static final String KEY_PREF_FONTS_PATH = "pref_fileMgmtFontsPath";
 
     @Override
+    public void finish() {
+        super.finish();
+        overridePendingTransition(0, 0);
+    }   
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(this);
         boolean eink = prefs.getBoolean("pref_eink_mode", true);   

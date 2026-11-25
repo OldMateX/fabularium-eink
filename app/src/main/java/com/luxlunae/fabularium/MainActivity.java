@@ -293,26 +293,20 @@ public class MainActivity extends AppCompatActivity
     public void onBackPressed() {
         if (DEBUG_LIFECYCLE) {
             FabLogger.debug("MainActivity: onBackPressed()");
-            FabLogger.debug("MainActivity: # fragments before = " + getSupportFragmentManager().getFragments().size());
         }
         boolean ret = false;
 
         if (mTabCurPos == POS_TAB_EXPLORE) {
-            // send the back key through to the explore fragment
-            Fragment frag = (Fragment) mAdapter.instantiateItem(mPager, POS_TAB_EXPLORE);
+            Fragment frag = getSupportFragmentManager().findFragmentByTag("tab_" + POS_TAB_EXPLORE);
             if (frag instanceof FileSelectorFragment) {
                 ret = ((FileSelectorFragment) frag).onBackPressed();
             }
         }
 
-        if (DEBUG_LIFECYCLE) {
-            FabLogger.debug("MainActivity: # fragments after = " + getSupportFragmentManager().getFragments().size());
-        }
-
         if (!ret) {
             super.onBackPressed();
         }
-    }
+    }   
 
     @Override
     public void onCopyAssetsPostExecute(@Nullable File[] results) {
@@ -341,56 +335,26 @@ public class MainActivity extends AppCompatActivity
     }
 
     private void createTabStrip() {
-        // Set up the tab strip        
         mAdapter = new ScreenSlidePagerAdapter(getSupportFragmentManager());
         mPager = findViewById(R.id.pager);
         mPager.setAdapter(mAdapter);
-        // Kill the ViewPager slide: make page changes instant
-        mPager.setOnTouchListener(new android.view.View.OnTouchListener() {
-            @Override
-            public boolean onTouch(android.view.View v, android.view.MotionEvent event) {
-                if (event.getAction() == android.view.MotionEvent.ACTION_MOVE) {
-                    return true; // Block horizontal drag
-                }
-                return false;
-            }
-        });   
-
-
-
-        mPager.addOnPageChangeListener(new ViewPager.SimpleOnPageChangeListener() {
-            @Override
-            public void onPageSelected(int position) {
-                if (mTabCurPos == POS_TAB_EXPLORE && position != POS_TAB_EXPLORE) {
-                    setToolbarMode(TOOLBAR_MODE.SELECT_FILES);
-                    setToolbarSelected(0, 0);
-                    Fragment frag = (Fragment) mAdapter.instantiateItem(mPager, POS_TAB_EXPLORE);
-                    if (frag instanceof FileSelectorFragment) {
-                        ((FileSelectorFragment) frag).selectAll(false);
-                    }
-                }
-                mTabCurPos = position;
-            }
-        });
 
         TabLayout tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mPager);
 
-        // Set up the toolbar
         mToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(mToolbar);
-        // Force the popup to use the eink theme directly.
-        // Bypasses Material3's internal popup theme resolution.
-        mToolbar.setPopupTheme(R.style.Theme_Fabularium_EInk);   
+        mToolbar.setPopupTheme(R.style.Theme_Fabularium_EInk);
 
-        // Initialise default preferences
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }   
 
+
+
     @NonNull
     public Fragment getTab(int pos) {
-        return (Fragment) mAdapter.instantiateItem(mPager, pos);
-    }
+        return getSupportFragmentManager().findFragmentByTag("tab_" + pos);
+    }   
 
     public void setToolbarCheckBoxListener(@Nullable CompoundButton.OnCheckedChangeListener listener) {
         if (mToolbarCheckBox != null) {

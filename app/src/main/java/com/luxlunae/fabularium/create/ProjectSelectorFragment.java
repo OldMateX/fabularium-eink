@@ -235,9 +235,9 @@ public class ProjectSelectorFragment extends Fragment
             }
             switch (item.getItemId()) {
                 case R.id.action_settings: {
-                    android.widget.Toast.makeText(act, "Settings tapped", android.widget.Toast.LENGTH_SHORT).show();
                     Intent i = new Intent(act, com.luxlunae.fabularium.PreferencesActivity.class);
                     startActivity(i);
+                    act.overridePendingTransition(0, 0);   
                     return true;
                 }
                 case R.id.projaction_refresh: {

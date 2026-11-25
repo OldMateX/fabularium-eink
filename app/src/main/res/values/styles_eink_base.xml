@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Shared E-ink base: kills all animations, ripples, and elevation.
+    Inherited by both day and night E-ink themes.
+-->
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- No-op animation: makes popups/windows appear and disappear instantly -->
+    <style name="NoAnim" parent="android:Animation">
+        <item name="android:windowEnterAnimation">@anim/no_animation</item>
+        <item name="android:windowExitAnimation">@anim/no_animation</item>
+    </style>
+
+    <!-- Base for all E-ink themes -->
+    <style name="Theme.Fabularium.EInk.Base" parent="Theme.Fabularium">
+
+        <!-- === KILL ANIMATIONS === -->
+
+        <item name="android:windowAnimationStyle">@style/NoAnim</item>
+        <item name="android:popupAnimationStyle">@style/NoAnim</item>
+        <item name="android:animateLayoutChanges">false</item>
+        <item name="android:windowContentTransitions">false</item>
+
+        <!-- Kill Material3 motion system -->
+        <item name="motionDurationShort1">0</item>
+        <item name="motionDurationShort2">0</item>
+        <item name="motionDurationShort3">0</item>
+        <item name="motionDurationShort4">0</item>
+        <item name="motionDurationMedium1">0</item>
+        <item name="motionDurationMedium2">0</item>
+        <item name="motionDurationMedium3">0</item>
+        <item name="motionDurationMedium4">0</item>
+        <item name="motionDurationLong1">0</item>
+        <item name="motionDurationLong2">0</item>
+        <item name="motionDurationLong3">0</item>
+        <item name="motionDurationLong4">0</item>
+        <item name="motionDurationExtraLong1">0</item>
+        <item name="motionDurationExtraLong2">0</item>
+        <item name="motionDurationExtraLong3">0</item>
+        <item name="motionDurationExtraLong4">0</item>
+
+        <!-- === KILL RIPPLES === -->
+        <item name="android:colorControlHighlight">#00000000</item>
+        <item name="android:selectableItemBackground">@null</item>
+        <item name="selectableItemBackground">@null</item>
+        <item name="android:selectableItemBackgroundBorderless">@null</item>
+        <item name="tabStyle">@style/Widget.Fabularium.TabLayout</item>
+        <item name="popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
+        <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.PopupMenu.Overflow</item>
+        <item name="android:contextPopupMenuStyle">@style/Widget.Fabularium.ListPopupWindow</item>
+
+        <!-- === KILL ELEVATION / SHADOWS === -->
+
+        <item name="elevationOverlayEnabled">false</item>
+        <item name="android:elevation">0dp</item>
+        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:stateListAnimator">@null</item>
+
+    </style>
+
+</resources>   

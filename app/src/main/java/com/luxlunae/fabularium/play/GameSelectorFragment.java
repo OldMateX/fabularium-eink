@@ -266,6 +266,7 @@ public class GameSelectorFragment extends Fragment
                 // Show settings UI
                 Intent i = new Intent(act, PreferencesActivity.class);
                 startActivity(i);
+                act.overridePendingTransition(0, 0);   
                 return true;
             }
 

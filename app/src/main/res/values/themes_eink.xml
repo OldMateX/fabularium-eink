@@ -1,120 +1,33 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <!--
-    E-ink theme (day mode): pure white/black, no animations, no shadows.
-    Applied when pref_eink_mode is true and dark mode is off.
+    E-ink theme (day mode): pure white/black.
+    Inherits all animation/ripple/elevation kills from Base.
 -->
-<resources xmlns:tools="http://schemas.android.com/tools">
-    <style name="Theme.Fabularium.EInk" parent="Theme.Fabularium">
+<resources>
+    <style name="Theme.Fabularium.EInk" parent="Theme.Fabularium.EInk.Base">
 
-        <!-- Kill Material3's elevation tint (the grey overlay on popups/cards) -->
-        <item name="elevationOverlayEnabled">false</item>   
-
-        <!-- === COLOURS === -->
-
-                <!-- Background of the overflow popup (the 3-dot menu) -->
-        <item name="colorBackgroundFloating">#FFFFFF</item>   
-
-        <!-- Background of the entire app window -->
-        <item name="android:windowBackground">#FFFFFF</item>
-
-        <!-- Background of the settings list and any view that doesn't specify its own -->
-        <item name="android:colorBackground">#FFFFFF</item>
-
-        <!-- Background of the 3-dot overflow menu, dropdowns, tooltips -->
-        <item name="android:popupBackground">#FFFFFF</item>
-
-        <!-- Material3 "surface" — cards, dialogs, sheets, bottom bars -->
-        <item name="colorSurface">#FFFFFF</item>
-
-        <!-- Material3 nested surfaces — what the preference list items use as their bg -->
-        <item name="colorSurfaceContainer">#FFFFFF</item>
-        <item name="colorSurfaceContainerLow">#FFFFFF</item>
-        <item name="colorSurfaceContainerHigh">#FFFFFF</item>
-
-        <!-- Main body text, titles, headings -->
-        <item name="android:textColorPrimary">#000000</item>
-
-        <!-- Text/icons on Material3 surfaces (preference items, cards, dialogs) -->
+        <!-- Day colours -->
+        <item name="colorBackgroundFloating">#FFFFFF</item>
         <item name="colorOnSurface">#000000</item>
-
-        <!-- Text/icons on the app background -->
         <item name="colorOnBackground">#000000</item>
-
-        <!-- Text/icons on surface-variant elements (chips, dividers, etc.) -->
-        <item name="colorOnSurfaceVariant">#333333</item>   
-
-        <!-- Subtitles, summaries, helper text -->
+        <item name="colorOnSurfaceVariant">#333333</item>
+        <item name="android:textColorPrimary">#000000</item>
         <item name="android:textColorSecondary">#333333</item>
 
-        <!-- Toolbar/app bar background + primary buttons -->
-        <item name="colorPrimary">#000000</item>
-
-        <!-- Text/icons ON the toolbar (white text on black bar) -->
-        <item name="colorOnPrimary">#FFFFFF</item>
-
-        <!-- Older Material accent — links, progress bars -->
-        <item name="colorAccent">#000000</item>
-
-        <!-- === KILL ALL ANIMATIONS, RIPPLES, SHADOWS === -->
-
-        <!-- Activity open/close transitions -->
-        <item name="android:windowAnimationStyle">@null</item>
-
-        <!-- Layout change animations -->
-        <item name="android:animateLayoutChanges">false</item>
-
-        <!-- Shared element / content transitions -->
-        <item name="android:windowContentTransitions">false</item>
-
-        <!-- Ripple / touch feedback (fully transparent) -->
-        <item name="android:colorControlHighlight">#00000000</item>
-        <item name="android:selectableItemBackground">@null</item>
-        <item name="android:selectableItemBackgroundBorderless">@null</item>
-
-        <!-- Button "lift" on press -->
-        <item name="android:stateListAnimator">@null</item>
-
-        <!-- Shadows and elevation -->
-        <item name="android:elevation">0dp</item>
-        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
-        <item name="elevationOverlayEnabled">false</item>   
-
-        <!-- === DIALOGS === -->
-
-        <!-- Styling for pop-up dialogs (confirm boxes, long-press menus, etc.) -->
+        <!-- Dialogs -->
         <item name="alertDialogTheme">@style/Theme.Fabularium.EInk.Dialog</item>
         <item name="android:alertDialogTheme">@style/Theme.Fabularium.EInk.Dialog</item>
+    </style>
 
-        <!-- === POPUP MENUS (the 3-dot menu) === -->
-
-        <item name="popupMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu</item>
-        <item name="android:popupMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu</item>
-        <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.EInk.PopupMenu.Overflow</item>
-        <item name="listPopupWindowStyle">@style/Widget.Fabularium.EInk.ListPopupWindow</item>
-        <item name="android:listPopupWindowStyle">@style/Widget.Fabularium.EInk.ListPopupWindow</item>   
-    </style>   
-
-
-    <!-- Transparent window variant (for splash screens, etc.) -->
     <style name="Theme.Fabularium.EInk.Translucent" parent="Theme.Fabularium.EInk">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <!--
-        Dialog-specific: kills the slide-up animation and forces white background.
-        Applied to all dialogs including the nested PreferenceScreen sub-screens
-        (when you tap "Windows", "Typography", etc. in settings).
-    -->
-
     <style name="Theme.Fabularium.EInk.Dialog" parent="Theme.Fabularium.Dialog">
-        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowAnimationStyle">@style/NoAnim</item>
         <item name="android:background">#FFFFFF</item>
         <item name="android:windowBackground">#FFFFFF</item>
-    </style>   
-
-    <style>   
-        <!-- Material3 colour overrides (dialog inherits these, not the eink theme) -->
         <item name="colorSurface">#FFFFFF</item>
         <item name="colorSurfaceContainer">#FFFFFF</item>
         <item name="colorSurfaceContainerLow">#FFFFFF</item>
@@ -122,34 +35,5 @@
         <item name="colorOnSurface">#000000</item>
         <item name="colorOnBackground">#000000</item>
         <item name="colorOnSurfaceVariant">#333333</item>
-    </style>   
-
-    <!-- E-ink popup menus: pure white, black text, black border -->
-    <style name="Widget.Fabularium.EInk.PopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
-        <item name="android:background">#FFFFFF</item>
-        <item name="android:popupBackground">@drawable/eink_popup_background</item>
-        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
-        <item name="android:colorBackground">#FFFFFF</item>
-        <item name="android:textColorPrimary">#000000</item>
-        <item name="android:textColorSecondary">#333333</item>
     </style>
-
-    <style name="Widget.Fabularium.EInk.PopupMenu.Overflow" parent="Widget.AppCompat.Light.PopupMenu.Overflow">
-        <item name="android:background">#FFFFFF</item>
-        <item name="android:popupBackground">@drawable/eink_popup_background</item>
-        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
-        <item name="android:colorBackground">#FFFFFF</item>
-        <item name="android:textColorPrimary">#000000</item>
-        <item name="android:textColorSecondary">#333333</item>
-    </style>
-
-    <style name="Widget.Fabularium.EInk.ListPopupWindow" parent="Widget.AppCompat.Light.ListPopupWindow">
-        <item name="android:background">#FFFFFF</item>
-        <item name="android:popupBackground">@drawable/eink_popup_background</item>
-        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
-        <item name="android:colorBackground">#FFFFFF</item>
-        <item name="android:textColorPrimary">#000000</item>
-        <item name="android:textColorSecondary">#333333</item>
-    </style>   
-
 </resources>   
