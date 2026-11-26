@@ -19,10 +19,10 @@
   -->
 <!-- Popup/overflow menus: white panel with a solid black border. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="@color/eink_paper" />
+    <solid android:color="#FFFFFF" />
     <stroke
         android:width="2dp"
-        android:color="@color/eink_ink" />
+        android:color="#000000" />   
     <padding
         android:bottom="2dp"
         android:left="2dp"

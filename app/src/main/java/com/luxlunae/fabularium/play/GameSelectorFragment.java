@@ -569,7 +569,7 @@ public class GameSelectorFragment extends Fragment
         Context c = getContext();
         if (c != null) {
             mSelPosition = position;
-            PopupMenu popup = new PopupMenu(c, view);
+            PopupMenu popup = new PopupMenu(c, view, 0, R.style.Theme_Fabularium_Popup, 0);   
             popup.setOnMenuItemClickListener(this);
             popup.inflate(R.menu.gamesel_context);
             popup.show();

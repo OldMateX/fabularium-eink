@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Toolbar overlay: dark icons on light toolbar (dark mode) -->
+    <!-- Toolbar overlay: white bg, black icons (night mode) -->
     <style name="ThemeOverlay.Fabularium.Toolbar" parent="ThemeOverlay.AppCompat.Light">
+        <item name="android:background">#FFFFFF</item>
     </style>
-</resources>
+</resources>   

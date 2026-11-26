@@ -6,10 +6,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
     <!-- No-op animation: makes popups/windows appear and disappear instantly -->
-    <style name="NoAnim" parent="android:Animation">
-        <item name="android:windowEnterAnimation">@anim/no_animation</item>
-        <item name="android:windowExitAnimation">@anim/no_animation</item>
-    </style>
+    <!-- Empty: no enter or exit animation. Extending android:Animation with no items means "do nothing". -->
+    <style name="NoAnim" parent="android:Animation" />   
 
     <!-- Base for all E-ink themes -->
     <style name="Theme.Fabularium.EInk.Base" parent="Theme.Fabularium">
@@ -19,7 +17,6 @@
         <item name="android:windowAnimationStyle">@style/NoAnim</item>
         <item name="android:popupAnimationStyle">@style/NoAnim</item>
         <item name="android:animateLayoutChanges">false</item>
-        <item name="android:windowContentTransitions">false</item>
 
         <!-- Kill Material3 motion system -->
         <item name="motionDurationShort1">0</item>
@@ -48,6 +45,10 @@
         <item name="popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
         <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.PopupMenu.Overflow</item>
         <item name="android:contextPopupMenuStyle">@style/Widget.Fabularium.ListPopupWindow</item>
+        <item name="android:popupTheme">@style/Theme.Fabularium.Popup</item>
+        <item name="dropDownListViewStyle">@style/EInkPopupList</item>
+        <item name="android:dropDownListViewStyle">@style/EInkPopupList</item>   
+
 
         <!-- === KILL ELEVATION / SHADOWS === -->
 

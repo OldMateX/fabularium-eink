@@ -1,26 +1,42 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+    values/themes.xml
+    Default (light mode) theme.
+    White background, black text.
+-->
 <resources>
+
+    <!-- Main app theme -->
     <style name="Theme.Fabularium" parent="Theme.Material3.DayNight.NoActionBar">
+        <!-- Window & popup backgrounds: white -->
         <item name="android:windowBackground">#FFFFFF</item>
         <item name="android:popupBackground">#FFFFFF</item>
+
+        <!-- Dialog theme override -->
         <item name="alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
         <item name="android:alertDialogTheme">@style/Theme.Fabularium.Dialog</item>
+
+        <!-- Surface colours: all white -->
         <item name="android:colorBackground">#FFFFFF</item>
         <item name="colorSurface">#FFFFFF</item>
         <item name="colorSurfaceContainer">#FFFFFF</item>
         <item name="colorSurfaceContainerLow">#FFFFFF</item>
         <item name="colorSurfaceContainerHigh">#FFFFFF</item>
 
+        <!-- Primary: black (buttons, FAB) -->
         <item name="colorPrimary">#000000</item>
+        <!-- Text/icons ON primary surfaces: white -->
         <item name="colorOnPrimary">#FFFFFF</item>
+        <!-- Accent: black -->
         <item name="colorAccent">#000000</item>
     </style>
 
+    <!-- Popup/dropdown overlay: black text on white -->
     <style name="ThemeOverlay.Fabularium.Popup" parent="ThemeOverlay.AppCompat.Light">
         <item name="android:colorBackground">#FFFFFF</item>
         <item name="android:textColorPrimary">#000000</item>
         <item name="android:textColorSecondary">#333333</item>
         <item name="android:popupBackground">@drawable/eink_popup_background</item>
-    </style>   
+    </style>
 
 </resources>   

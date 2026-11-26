@@ -46,6 +46,7 @@ import android.view.inputmethod.InputMethodManager;
 import com.luxlunae.fabularium.FabLogger;
 import com.luxlunae.fabularium.R;
 import com.luxlunae.glk.GLKActivity;
+import com.luxlunae.glk.GLKConstants;   
 import com.luxlunae.glk.GLKLogger;
 import com.luxlunae.glk.GLKUtils;
 import com.luxlunae.glk.view.window.GLKTextBufferV;
@@ -1417,43 +1418,52 @@ public class GLKInputConnection implements InputConnection {
         endBatchEdit();
     }
 
+    /**
+     * Syncs the IME's local editable buffer back into the GLK model's input buffer.
+     *
+     * Called from:
+     *   - commitText()          → syncInputBuffer(false)  (user typed text)
+     *   - setComposingText()    → syncInputBuffer(false)  (composing/autocomplete)
+     *   - onEditorAction(DONE)  → syncInputBuffer(true)   (user pressed Enter/Done)
+     *
+     * BUGFIX (double-tap wipe):
+     *   Previously this cleared mModel.mInput and resent only mEditable's contents.
+     *   Text injected directly into mModel.mInput by onDoubleTap was lost.
+     *   Fix: capture mModel.mInput BEFORE clearing, resend it first, then the IME text.
+     */
     private void syncInputBuffer(boolean finalise) {
         if (DEBUG_INPUT_CONNECTION) {
             FabLogger.debug("GLKInputConnection: syncInputBuffer: finalise = " + finalise);
         }
-        if (mEditable != null && mView != null) {
-            mView.clearInputBuffer();
 
-            int len = mEditable.length();
-            if (len > 0 || finalise) {
-                int keyCodes[];
-                if (finalise && (len == 0 || mEditable.charAt(len - 1) != '\n')) {
-                    keyCodes = new int[len + 1];
-                    keyCodes[len] = '\n';
-                } else {
-                    keyCodes = new int[len];
-                }
-                for (int i = 0; i < len; i++) {
-                    keyCodes[i] = mEditable.charAt(i);
-                }
+        // Capture any text injected directly into the model (e.g. double-tap)
+        // BEFORE we wipe it.
+        String existing = mView.getInputBuffer();
 
-                GLKActivity act = GLKUtils.getActivityForView(mView);
-                if (act != null && act.sendKeyCodes(mView, keyCodes, null)) {
-                    if (DEBUG_INPUT_CONNECTION) {
-                        FabLogger.debug("GLKInputConnection: clear contents of editable.");
-                    }
-                    mEditable.clear();
-                    InputMethodManager imm = (InputMethodManager) mView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-                    if (imm != null && imm.isActive(mView)) {
-                        if (DEBUG_INPUT_CONNECTION) {
-                            FabLogger.debug("GLKInputConnection: restartInput.");
-                        }
-                        imm.restartInput(mView);
-                    }
-                }
-            }
+        // Wipe the model's input buffer — we'll resend everything below.
+        mView.clearInputBuffer();
+
+        int exLen = existing.length();   // chars from double-tap injection
+        int imLen = mEditable.length();  // chars the user typed via the IME
+
+        // Send the injected text first (preserves double-tapped words).
+        for (int i = 0; i < exLen; i++) {
+            mView.sendKey(existing.charAt(i));
         }
-    }
+
+        // Send the IME's text second.
+        for (int i = 0; i < imLen; i++) {
+            mView.sendKey(mEditable.charAt(i));
+        }
+
+        // If this is a finalise (Enter/Done), send Return to submit the line.
+        if (finalise) {
+            mView.sendKey(GLKConstants.keycode_Return);
+        }
+
+        // Reset the IME's local buffer for the next editing session.
+        mEditable.clear();
+    }   
 
     private static class ComposingText implements NoCopySpan {
     }

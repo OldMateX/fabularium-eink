@@ -31,8 +31,9 @@ import android.view.inputmethod.InputConnection;
 import android.view.inputmethod.InputMethodManager;
 
 import com.luxlunae.glk.GLKUtils;
+import com.luxlunae.glk.model.stream.window.GLKTextBufferM;
 import com.luxlunae.glk.model.stream.window.GLKTextWindowM;
-import com.luxlunae.glk.view.keyboard.GLKInputConnection;
+import com.luxlunae.glk.view.keyboard.GLKInputConnection;   
 
 public abstract class GLKTextWindowV extends GLKNonPairV {
     @NonNull
@@ -49,6 +50,11 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
     public abstract int sendKey(int key);
 
     public abstract void clearInputBuffer();
+
+    /** Returns the current input buffer contents as a string (for IME sync). */
+    public String getInputBuffer() {
+        return ((GLKTextBufferM) mModel).mInput.toString();
+    }   
 
     public boolean isTerminator(int key) {
         return GLKUtils.isTerminator(key, mCustomLineTerminators);

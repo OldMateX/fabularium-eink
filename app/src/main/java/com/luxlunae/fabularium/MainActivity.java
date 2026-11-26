@@ -341,10 +341,13 @@ public class MainActivity extends AppCompatActivity
 
         TabLayout tabLayout = findViewById(R.id.tabs);
         tabLayout.setupWithViewPager(mPager);
+        mPager.setPageTransformer(false, (v, position) -> {
+            v.setTranslationX(0);
+        });   
 
         mToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(mToolbar);
-        mToolbar.setPopupTheme(R.style.Theme_Fabularium_EInk);
+        mToolbar.setPopupTheme(R.style.Theme_Fabularium_Popup);   
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }   

@@ -821,7 +821,7 @@ Intent intent = getIntent();
 
     @Override
     public void onBackPressed() {
-        new AlertDialog.Builder(this)
+        new AlertDialog.Builder(this, R.style.Theme_Fabularium_EInk_Dialog)   
                 .setIcon(R.drawable.ic_warning_black_24dp)
                 .setTitle(R.string.glk_force_quit_title)
                 .setMessage(R.string.glk_force_quit_message)
