@@ -33,7 +33,7 @@ import android.view.inputmethod.InputMethodManager;
 import com.luxlunae.glk.GLKUtils;
 import com.luxlunae.glk.model.stream.window.GLKTextBufferM;
 import com.luxlunae.glk.model.stream.window.GLKTextWindowM;
-import com.luxlunae.glk.view.keyboard.GLKInputConnection;   
+import com.luxlunae.glk.view.keyboard.GLKInputConnection;
 
 public abstract class GLKTextWindowV extends GLKNonPairV {
     @NonNull
@@ -41,6 +41,14 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
     protected boolean mShowSystemKeyboard = false;
     @Nullable
     private int[] mCustomLineTerminators = null;        // custom line terminators (in addition to the default of [ENTER])
+
+    /**
+     * IME FIX: the connection most recently handed to the system keyboard. After a
+     * restartInput() the keyboard may still send a few calls (e.g. finishComposingText) to
+     * the previous connection; those must not overwrite the input line with stale text.
+     */
+    @Nullable
+    private GLKInputConnection mActiveInputConnection = null;
 
     GLKTextWindowV(@NonNull Context c, @NonNull GLKTextWindowM model) {
         super(c, model);
@@ -51,10 +59,79 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
 
     public abstract void clearInputBuffer();
 
-    /** Returns the current input buffer contents as a string (for IME sync). */
+    /**
+     * Returns the current input buffer contents as a string (for IME sync).
+     *
+     * IME FIX: the old version cast mModel to GLKTextBufferM unconditionally, which would
+     * throw a ClassCastException for a text grid window. Grid windows now get "" unless
+     * GLKTextGridV overrides this.
+     */
+    @NonNull
     public String getInputBuffer() {
-        return ((GLKTextBufferM) mModel).mInput.toString();
-    }   
+        if (mModel instanceof GLKTextBufferM) {
+            return ((GLKTextBufferM) mModel).mInput.toString();
+        }
+        return "";
+    }
+
+    // ------------------------------------------------------------------
+    // IME FIX: hooks used by GLKInputConnection (system keyboard support)
+    // ------------------------------------------------------------------
+
+    /**
+     * IME FIX: true while a line-input request is active and the system keyboard may edit
+     * the input line. GLKTextBufferV overrides this to use its own composing state.
+     */
+    public boolean isAcceptingLineInput() {
+        return lineRequested();
+    }
+
+    /**
+     * IME FIX: replace the in-progress input line with {@code text}. GLKInputConnection calls
+     * this after every system-keyboard edit, so the line always mirrors the keyboard's text
+     * (replace, never append). GLKTextBufferV overrides this with a direct buffer replace;
+     * this default (used by text grids) clears the line and re-sends it key by key.
+     */
+    public void setInputBuffer(@NonNull CharSequence text) {
+        clearInputBuffer();
+        String s = text.toString();
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            sendKey(cp);
+            i += Character.charCount(cp);
+        }
+    }
+
+    /**
+     * IME FIX: make the system keyboard re-read the input line. Call this whenever the line
+     * changes outside the keyboard's own edits (submit, double-tap word insertion, TADS links,
+     * a new line request, ...). It creates a fresh GLKInputConnection seeded from the current
+     * input line. Posted, because it is often called from inside an InputConnection callback.
+     */
+    public void restartSystemIme() {
+        if (!mShowSystemKeyboard) {
+            return;
+        }
+        post(new Runnable() {
+            @Override
+            public void run() {
+                InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+                if (imm != null) {
+                    // "If the input method is currently connected to the given view,
+                    //  restart it with its new contents."
+                    imm.restartInput(GLKTextWindowV.this);
+                }
+            }
+        });
+    }
+
+    /**
+     * IME FIX: true if {@code ic} is the connection the system keyboard is currently using.
+     * Older connections (from before the last restartInput) are stale and must not edit the line.
+     */
+    public boolean isActiveInputConnection(@NonNull GLKInputConnection ic) {
+        return ic == mActiveInputConnection;
+    }
 
     public boolean isTerminator(int key) {
         return GLKUtils.isTerminator(key, mCustomLineTerminators);
@@ -126,6 +203,7 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
     @Override
     public InputConnection onCreateInputConnection(@NonNull EditorInfo outAttrs) {
         if (!mShowSystemKeyboard) {
+            mActiveInputConnection = null;
             return null;
         }
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1) {
@@ -140,8 +218,12 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
         // not known. Keep in mind that, without knowing the cursor position, many IMEs
         // will not be able to offer their full feature set and may behave in
         // unpredictable ways: pass the actual cursor position here if possible at all.
-        outAttrs.initialSelStart = 0;
-        outAttrs.initialSelEnd = 0;
+        //
+        // IME FIX: was always 0. The new GLKInputConnection is seeded with the current input
+        // line (when a line is being composed), so the cursor starts at the end of that text.
+        int len = isAcceptingLineInput() ? getInputBuffer().length() : 0;
+        outAttrs.initialSelStart = len;
+        outAttrs.initialSelEnd = len;
 
         // A label to show to the user describing the text they are writing.
         outAttrs.label = "Fabularium input";
@@ -152,6 +234,12 @@ public abstract class GLKTextWindowV extends GLKNonPairV {
         // Extended type information for the editor, to help the IME better integrate with it.
         outAttrs.imeOptions |= EditorInfo.IME_ACTION_DONE;
 
-        return new GLKInputConnection(this);
+        // IME FIX: never switch to the IME's fullscreen "extract" editor (e.g. in landscape).
+        // It needs getExtractedText(), which we don't support, and would hide the game text.
+        outAttrs.imeOptions |= EditorInfo.IME_FLAG_NO_EXTRACT_UI | EditorInfo.IME_FLAG_NO_FULLSCREEN;
+
+        // IME FIX: remember which connection is current, so stale ones can be ignored.
+        mActiveInputConnection = new GLKInputConnection(this);
+        return mActiveInputConnection;
     }
 }

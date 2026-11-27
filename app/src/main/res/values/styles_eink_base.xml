@@ -45,7 +45,7 @@
         <item name="popupMenuStyle">@style/Widget.Fabularium.PopupMenu</item>
         <item name="actionOverflowMenuStyle">@style/Widget.Fabularium.PopupMenu.Overflow</item>
         <item name="android:contextPopupMenuStyle">@style/Widget.Fabularium.ListPopupWindow</item>
-        <item name="android:popupTheme">@style/Theme.Fabularium.Popup</item>
+        <item name="android:popupTheme">@style/ThemeOverlay.Fabularium.Popup</item>
         <item name="dropDownListViewStyle">@style/EInkPopupList</item>
         <item name="android:dropDownListViewStyle">@style/EInkPopupList</item>   
 

@@ -19,24 +19,14 @@
   -->
 <resources xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Dialog: border instead of shadow, no dim, black button text -->
-    <style name="Theme.Fabularium.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
-        <item name="colorAccent">#000000</item>
-        <item name="android:textColorPrimary">#000000</item>   
-        <item name="android:windowAnimationStyle">@null</item>
-        <item name="android:windowBackground">@drawable/eink_dialog_background</item>
-        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
-        <item name="android:backgroundDimEnabled">false</item>
-    </style>
-
-    <!-- Overflow menu (three dots in toolbar): white/black panel, no shadow, no animation -->
-<style name="Widget.Fabularium.PopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
-    <item name="android:background">?android:attr/colorBackground</item>
-    <item name="android:popupBackground">@drawable/eink_popup_background</item>
-    <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
-    <item name="android:popupAnimationStyle">@style/NoAnim</item>
-    <item name="android:textColorPrimary">#000000</item>
-</style>   
+        <!-- Overflow menu (three dots in toolbar): white/black panel, no shadow, no animation -->
+    <style name="Widget.Fabularium.PopupMenu" parent="Widget.AppCompat.Light.PopupMenu">
+        <item name="android:background">?android:attr/colorBackground</item>
+        <item name="android:popupBackground">@drawable/eink_popup_background</item>
+        <item name="android:popupElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:popupAnimationStyle">@style/NoAnim</item>
+        <item name="android:textColorPrimary">#000000</item>
+    </style>   
 
     <!-- Same but for the overflow menu specifically (the three-dot button) -->
     <style name="Widget.Fabularium.PopupMenu.Overflow" parent="Widget.AppCompat.Light.PopupMenu.Overflow">
@@ -56,15 +46,25 @@
         <item name="android:textColorPrimary">#000000</item>
     </style>   
 
-    <!-- Always-light theme for popup menus (white bg, black text, no item slide) -->
-    <style name="Theme.Fabularium.Popup" parent="ThemeOverlay.AppCompat.Light">
+    <style name="Theme.Fabularium.Dialog" parent="Theme.AppCompat.Light.Dialog.Alert">
+        <item name="colorAccent">#000000</item>
         <item name="android:textColorPrimary">#000000</item>
-        <item name="android:textColorSecondary">#333333</item>
-        <item name="colorOnSurface">#000000</item>
-        <item name="colorOnSurfaceVariant">#333333</item>
-        <item name="colorOnBackground">#000000</item>
-        <item name="android:dropDownListViewStyle">@style/EInkPopupList</item>
-    </style>
+        <item name="colorPrimary">#000000</item>
+        <item name="android:windowAnimationStyle">@null</item>
+        <item name="android:windowBackground">@drawable/eink_dialog_background</item>
+        <item name="android:windowElevation" tools:targetApi="lollipop">0dp</item>
+        <item name="android:backgroundDimEnabled">false</item>
+        <!-- Forces black buttons with white text in all dialogs -->
+        <item name="buttonBarButtonStyle">@style/Fabularium.Dialog.Button</item>
+    </style>   
+
+    <!-- Dialog buttons: white bg, black text, outlined, inset for spacing -->
+    <style name="Fabularium.Dialog.Button" parent="Widget.AppCompat.Button.ButtonBar.AlertDialog">
+        <item name="android:background">@drawable/dialog_button_outline</item>
+        <item name="android:textColor">#000000</item>
+        <item name="android:backgroundTint">@null</item>
+        <item name="backgroundTint">@null</item>
+    </style>   
 
     <!-- Kills the staggered slide-in of individual popup items -->
     <style name="EInkPopupList">

@@ -1,0 +1,240 @@
+﻿package com.luxlunae.glk.view.keyboard;
+
+import android.content.Context;
+import android.os.SystemClock;
+import android.text.Editable;
+import android.text.Selection;
+import android.util.Log;
+import android.view.KeyEvent;
+import android.view.inputmethod.BaseInputConnection;
+import android.view.inputmethod.InputMethodManager;
+
+import androidx.annotation.NonNull;
+
+import com.luxlunae.glk.GLKActivity;
+import com.luxlunae.glk.view.window.GLKTextWindowV;
+
+/**
+ * Bridge between the system IME (Gboard, FUTO, ...) and a GLK text window.
+ *
+ * Design:
+ *  - BaseInputConnection does all composing / commit / delete / text-query work against
+ *    ONE Editable (mEditable). No hand-copied composing-span code.
+ *  - mEditable is seeded from the view's input line whenever a connection is created,
+ *    so after every restartInput() the IME and the game agree on the text.
+ *  - LINE input: after every IME edit (end of the outermost batch edit) mEditable is
+ *    MIRRORED into the view's input line (replace, never append). Enter mirrors once more,
+ *    then sends Return through GLKActivity.sendKeyCodes() - the same router the built-in
+ *    keyboard uses - which writes the GLK buffer and posts the line event.
+ *  - CHAR input: typed characters, Enter and Backspace go straight to the router as keys,
+ *    which posts char events. Nothing is kept in mEditable.
+ *  - Enter is debounced: one press can arrive as performEditorAction + sendKeyEvent(ENTER).
+ *  - After a submit or a char key, the IME is restarted so it drops stale composing state.
+ */
+public class GLKInputConnection extends BaseInputConnection {
+    private static final String TAG = "Fab";
+    private static final boolean DEBUG_INPUT_CONNECTION = false;
+
+    /** Raw key codes the router expects (it translates them with GLKUtils.translateKeyToGLKCode). */
+    private static final int RAW_RETURN = '\n';
+    private static final int RAW_BACKSPACE = 8;
+
+    private static final long ENTER_DEBOUNCE_MS = 400;
+    /** Static: the duplicate Enter may land on a fresh connection after restartInput(). */
+    private static long sLastEnterTime = 0;
+
+    @NonNull private final GLKTextWindowV mView;
+    @NonNull private final Editable mEditable;
+    private int mBatchDepth = 0;
+
+    public GLKInputConnection(@NonNull GLKTextWindowV view) {
+        super(view, true); // fullEditor = true: never fall back to sending key events
+        mView = view;
+        mEditable = Editable.Factory.getInstance().newEditable(view.getInputBuffer());
+        Selection.setSelection(mEditable, mEditable.length());
+        debug("new connection, seeded with '" + mEditable + "'");
+    }
+
+    // ------------------------------------------------------------------
+    // BaseInputConnection hooks
+    // ------------------------------------------------------------------
+
+    @Override
+    public Editable getEditable() {
+        return mEditable;
+    }
+
+    @Override
+    public boolean beginBatchEdit() {
+        mBatchDepth++;
+        return true;
+    }
+
+    @Override
+    public boolean endBatchEdit() {
+        if (mBatchDepth > 0) {
+            mBatchDepth--;
+        }
+        if (mBatchDepth == 0) {
+            pushToView();
+            notifyImeSelection();
+        }
+        return mBatchDepth > 0;
+    }
+
+    @Override
+    public boolean setComposingText(CharSequence text, int newCursorPosition) {
+        debug("setComposingText '" + text + "' before='" + mEditable + "'");
+        if (mView.charRequested()) {
+            sendCharsToGame(text);
+            return true;
+        }
+        return super.setComposingText(text, newCursorPosition);
+    }
+
+    @Override
+    public boolean commitText(CharSequence text, int newCursorPosition) {
+        debug("commitText '" + text + "' before='" + mEditable + "'");
+        if (mView.charRequested()) {
+            sendCharsToGame(text);
+            return true;
+        }
+        return super.commitText(text, newCursorPosition);
+    }
+
+    @Override
+    public boolean performEditorAction(int actionCode) {
+        // Any editor action (DONE, GO, SEND, unspecified) means "Enter" here.
+        enter("performEditorAction(" + actionCode + ")");
+        return true;
+    }
+
+    @Override
+    public boolean sendKeyEvent(@NonNull KeyEvent event) {
+        final int code = event.getKeyCode();
+        final boolean isEnter = code == KeyEvent.KEYCODE_ENTER
+                || code == KeyEvent.KEYCODE_NUMPAD_ENTER;
+
+        if (event.getAction() != KeyEvent.ACTION_DOWN) {
+            return isEnter || code == KeyEvent.KEYCODE_DEL; // swallow the matching UPs
+        }
+        if (isEnter) {
+            enter("sendKeyEvent(ENTER)");
+            return true;
+        }
+        if (code == KeyEvent.KEYCODE_DEL) {
+            if (mView.charRequested()) {
+                route(RAW_BACKSPACE);
+                return true;
+            }
+            deleteBeforeCursor();
+            return true;
+        }
+        int c = event.getUnicodeChar();
+        if (c != 0) {
+            return commitText(new String(Character.toChars(c)), 1);
+        }
+        return false;
+    }
+
+    // ------------------------------------------------------------------
+    // Internals
+    // ------------------------------------------------------------------
+
+    /** Single entry point for Enter, whatever route it arrived by. */
+    private void enter(String why) {
+        long now = SystemClock.uptimeMillis();
+        if (now - sLastEnterTime < ENTER_DEBOUNCE_MS) {
+            debug("Enter ignored (duplicate) via " + why);
+            return;
+        }
+        sLastEnterTime = now;
+
+        if (mView.charRequested()) {
+            debug("Enter via " + why + " -> char event");
+            route(RAW_RETURN);
+            return;
+        }
+        if (!mView.isAcceptingLineInput()) {
+            debug("Enter via " + why + " ignored: no line or char request");
+            return;
+        }
+
+        removeComposingSpans(mEditable); // finalise whatever the IME was composing
+        pushToView();                     // view now holds exactly the IME text
+        debug("submit via " + why + ": '" + mView.getInputBuffer() + "'");
+        mEditable.clear();
+        if (!route(RAW_RETURN)) {
+            Log.w(TAG, "GLKInputConnection: router did not accept Return");
+        }
+        mView.restartSystemIme();         // IME forgets its stale composing state
+    }
+
+    /** Char-request mode: hand the characters to the game as key presses. */
+    private void sendCharsToGame(CharSequence text) {
+        String s = text.toString();
+        int[] codes = new int[s.codePointCount(0, s.length())];
+        for (int i = 0, n = 0; i < s.length(); n++) {
+            int cp = s.codePointAt(i);
+            codes[n] = cp;
+            i += Character.charCount(cp);
+        }
+        if (codes.length > 0) {
+            route(codes);
+        }
+        mEditable.clear();
+        mView.restartSystemIme(); // the IME thought it was composing; reset it
+    }
+
+    /** Send raw key codes through the same router the built-in keyboard uses. */
+    private boolean route(int... codes) {
+        Context c = mView.getContext();
+        if (c instanceof GLKActivity) {
+            return ((GLKActivity) c).sendKeyCodes(mView, codes, null);
+        }
+        Log.w(TAG, "GLKInputConnection: view context is not GLKActivity, key dropped");
+        return false;
+    }
+
+    private void deleteBeforeCursor() {
+        beginBatchEdit();
+        int end = Selection.getSelectionEnd(mEditable);
+        if (end < 0) end = mEditable.length();
+        int start = Selection.getSelectionStart(mEditable);
+        if (start >= 0 && start != end) {
+            mEditable.delete(Math.min(start, end), Math.max(start, end));
+        } else if (end > 0) {
+            int prev = Character.offsetByCodePoints(mEditable, end, -1);
+            mEditable.delete(prev, end);
+        }
+        endBatchEdit();
+    }
+
+    /** Mirror the IME's text into the game's input line (replace, never append). */
+    private void pushToView() {
+        if (!mView.isAcceptingLineInput()) {
+            return; // typed between line requests: stays in mEditable as type-ahead
+        }
+        String text = mEditable.toString();
+        if (!text.equals(mView.getInputBuffer())) {
+            mView.setInputBuffer(text);
+        }
+    }
+
+    private void notifyImeSelection() {
+        InputMethodManager imm = (InputMethodManager)
+                mView.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm == null) return;
+        imm.updateSelection(mView,
+                Selection.getSelectionStart(mEditable),
+                Selection.getSelectionEnd(mEditable),
+                getComposingSpanStart(mEditable),
+                getComposingSpanEnd(mEditable));
+    }
+
+    private static void debug(String msg) {
+        if (DEBUG_INPUT_CONNECTION) {
+            Log.d(TAG, "GLKInputConnection: " + msg);
+        }
+    }
+}

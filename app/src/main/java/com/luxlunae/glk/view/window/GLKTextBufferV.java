@@ -36,6 +36,7 @@ import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.StaticLayout;
 import android.text.style.CharacterStyle;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.LinearLayout;
@@ -59,6 +60,21 @@ import java.util.ArrayList;
 import static com.luxlunae.glk.model.stream.window.GLKWindowM.ModifierFlag.FLAG_BG_COLOR_CHANGED;
 import static com.luxlunae.glk.model.stream.window.GLKWindowM.ModifierFlag.FLAG_CLEARED;
 
+/*
+ * IME FIX summary (search this file for "IME FIX" to see every change):
+ *  - isAcceptingLineInput() / setInputBuffer(): hooks GLKInputConnection uses to mirror the
+ *    system keyboard's text into mModel.mInput (replace, never append).
+ *  - updateInputState(): restarts the system keyboard when a line request starts or ends, so
+ *    it re-reads the (new, usually empty) input line instead of keeping stale text.
+ *  - onDoubleTap(), insertWordAt(), processTADSLink(): restart the system keyboard after
+ *    changing mModel.mInput directly, so the keyboard sees the inserted word.
+ *  - TAP FIX: single-tap and double-tap share appendTappedWord(), which also adds a space
+ *    AFTER the word ("go" + "north" -> "go north ").
+ *  - resetInputConnection(): now delegates to GLKTextWindowV.restartSystemIme().
+ *  - setComposing(): no longer used (it let the old IME code force input open after a submit,
+ *    which caused the repeated "go southgo south..." submissions). Kept, deprecated, as a no-op
+ *    in case anything else still calls it.
+ */
 @SuppressLint("ViewConstructor")
 public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.ScrollChild {
 
@@ -148,6 +164,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
 
     @Override
     public int sendKey(int key) {
+        Log.d("Fab", "sendKey(" + key + ") mComposing=" + mComposing);
         if (!mComposing) {
             return 0;
         }
@@ -334,12 +351,20 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                 startComposing();
                 drawInput();
                 invalidate();
+
+                // IME FIX: a new line request has started. Make the system keyboard re-read
+                // the input line, so it starts from what the game has (usually empty) rather
+                // than whatever it held when the previous line was submitted.
+                restartSystemIme();
             }
             processBufferedInputIfAny();
         } else {
             if (mComposing) {
                 stopComposing(false);
                 invalidate();
+
+                // IME FIX: line input has ended; drop the keyboard's copy of the old line.
+                restartSystemIme();
             }
             mCurLineEvent = -1;
         }
@@ -351,6 +376,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
      * @return a copy of the input buffer.
      */
     @NonNull
+    @Override
     public String getInputBuffer() {
         return mModel.mInput.toString();
     }
@@ -359,9 +385,46 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
      * Clear the underlying input buffer and update the composing input text
      * currently displayed on-screen.
      */
+    @Override
     public void clearInputBuffer() {
         mModel.mInput.setLength(0);
         drawInput();
+        invalidate();
+    }
+
+    /**
+     * IME FIX: the system keyboard may only edit the line while we are composing it.
+     */
+    @Override
+    public boolean isAcceptingLineInput() {
+        return mComposing;
+    }
+
+    /**
+     * IME FIX: replace the whole input line with the system keyboard's text. Called by
+     * GLKInputConnection after every keyboard edit. Replacing (rather than appending via
+     * sendKey, as the old syncInputBuffer did) is what keeps the line from accumulating
+     * "ggogo go s...". Applies the same 8-bit / 32-bit rules as sendKey().
+     */
+    @Override
+    public void setInputBuffer(@NonNull CharSequence text) {
+        if (!mComposing) {
+            return;
+        }
+        mModel.mInput.setLength(0);
+        String s = text.toString();
+        for (int i = 0; i < s.length(); ) {
+            int cp = s.codePointAt(i);
+            i += Character.charCount(cp);
+            if (!mModel.mIs32Bit) {
+                // 8-bit buffer: anything above 255 becomes "?" as per the GLK spec
+                mModel.mInput.append(cp > 255 ? (char) 0x3F : (char) cp);
+            } else if (Character.isValidCodePoint(cp)) {
+                mModel.mInput.appendCodePoint(cp);
+            }
+        }
+        drawInput();
+        scrollToEnd();
         invalidate();
     }
 
@@ -404,6 +467,19 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         if (mLayout != null) {
             mLayout.getCursorPath(mOutput.length(), mHighlightPath, mOutput);
         }
+    }
+
+    /**
+     * IME FIX: no longer used. The old GLKInputConnection called setComposing(true) before
+     * every sync, which re-opened input after the line had already been submitted and caused
+     * duplicate submissions. Composing state is now owned solely by this class
+     * (startComposing / stopComposing). Kept as a no-op so any leftover caller still compiles.
+     *
+     * @deprecated composing state is controlled by line requests only.
+     */
+    @Deprecated
+    public void setComposing(boolean composing) {
+        // intentionally does nothing
     }
 
     /**
@@ -535,18 +611,15 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         resetInputConnection();
     }
 
+    /**
+     * Make the system keyboard re-read the input line after it was changed outside the
+     * keyboard's own edits.
+     *
+     * IME FIX: now delegates to GLKTextWindowV.restartSystemIme(), which does the same
+     * restartInput() call (posted, and only when the system keyboard is enabled).
+     */
     private void resetInputConnection() {
-        if (mShowSystemKeyboard) {
-            InputMethodManager imm = (InputMethodManager) getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-            if (imm != null) {
-                // restartInput:
-                //   "If the input method is currently connected to the given view,
-                //    restart it with its new contents. You should call this when the text
-                //    within your view changes outside of the normal input method or key
-                //    input flow, such as when an application calls TextView.setText()."
-                imm.restartInput(this);
-            }
-        }
+        restartSystemIme();
     }
 
     @Override
@@ -606,13 +679,84 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             ev.lineEvent(mModel.getStreamId(), mModel.mInput.length(), 0);
             GLKController.postEvent(ev);
         }
+
+        // IME FIX: the input line changed outside the system keyboard - make it re-read it.
+        restartSystemIme();
     }
 
     @Override
     public void onLongPress(@NonNull MotionEvent e) {
-        // for now, we just paste
-        // TODO: show a context menu with various options
-        onTextContextMenuItem(ID_PASTE);
+        // Long-press to show the system keyboard for typing.
+        InputMethodManager imm = (InputMethodManager)
+            getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT);
+        }
+    }
+
+    private boolean insertWordAt(@NonNull MotionEvent e) {
+        if (!mComposing || mLayout == null) return false;
+
+        float x = e.getX() + getScrollX() - mPaddingLeft;
+        float y = e.getY() + getScrollY() - mPaddingTop - mVOffset;
+        int line = mLayout.getLineForVertical((int) y);
+        int offset = mLayout.getOffsetForHorizontal(line, (int) x);
+
+        int i1, i2;
+        CharSequence txt = mLayout.getText();
+        for (i1 = offset - 1; i1 >= 0; i1--) {
+            if (!Character.isLetterOrDigit(txt.charAt(i1))) { i1++; break; }
+        }
+        i1 = Math.max(i1, 0);
+        for (i2 = offset + 1; i2 < txt.length(); i2++) {
+            if (!Character.isLetterOrDigit(txt.charAt(i2))) break;
+        }
+        i2 = Math.min(i2, txt.length() - 1);
+
+        int len = i2 - i1;
+        if (len <= 0 || len > 200) return false;
+
+        String word = txt.subSequence(i1, i2).toString().trim();
+        appendTappedWord(word);
+        return true;
+    }
+
+    /**
+     * Add a tapped / double-tapped word to the input line.
+     *
+     * TAP FIX: adds a space before the word if the line doesn't already end in whitespace,
+     * and ALWAYS a space after it, so tapping "go" then "north" gives "go north " rather than
+     * "gonorth" (the trailing space is harmless to the parser).
+     *
+     * IME FIX: the word goes straight into mModel.mInput, so the system keyboard doesn't know
+     * about it. restartSystemIme() creates a new connection seeded with the full line
+     * (including the word), so further typing continues after it.
+     */
+    private void appendTappedWord(@NonNull String word) {
+        if (word.isEmpty()) {
+            return;
+        }
+        int lenBuf = mModel.mInput.length();
+        if (lenBuf > 0 && !Character.isWhitespace(mModel.mInput.charAt(lenBuf - 1))) {
+            mModel.mInput.append(' ');
+        }
+        mModel.mInput.append(word);
+        mModel.mInput.append(' ');
+        if (mModel.mInputBB != null) {
+            mModel.mCharsetMgr.putGLKString(mModel.mInput.toString(), mModel.mInputBB, mModel.mIs32Bit, false);
+        }
+        drawInput();
+        scrollToEnd();
+        invalidate();
+        restartSystemIme();
+    }
+
+    @Override
+    public boolean onSingleTapUp(@NonNull MotionEvent e) {
+        // Always consume. The parent's onSingleTapUp toggles the keyboard,
+        // which causes flicker on the first tap of a double-tap.
+        // The keyboard is shown via long-press instead.
+        return true;
     }
 
     @Override
@@ -647,7 +791,9 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                 }
                 return true;
             } else {
-                // if accessiblity enabled, repeat the last flushed text
+                if (insertWordAt(arg0)) {
+                    return true;
+                }
                 announceForAccessibility((mLastFlush != null) ?
                         "Text buffer " + getStreamId() + ". " + mLastFlush :
                         "Text buffer 1 is empty.");
@@ -700,19 +846,9 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                 // that the user won't be able to double-tap it and will have to type
                 // the old-fashioned way (as painful as that would be).
                 String word = txt.subSequence(i1, i2).toString().trim();
-                // Append to display buffer and flush to GLK byte buffer immediately
-                // (same pattern as processTADSLink - ensures C layer sees the text)
-                int lenBuf = mModel.mInput.length();
-                if (lenBuf > 0 && !Character.isWhitespace(mModel.mInput.charAt(lenBuf - 1))) {
-                    mModel.mInput.append(' ');
-                }
-                mModel.mInput.append(word);
-                if (mModel.mInputBB != null) {
-                    mModel.mCharsetMgr.putGLKString(mModel.mInput.toString(), mModel.mInputBB, mModel.mIs32Bit, false);
-                }
-                drawInput();
-                scrollToEnd();
-                invalidate();   
+                // TAP FIX: shared with single-tap; adds the word plus a trailing space and
+                // resyncs the system keyboard.
+                appendTappedWord(word);
             }
             return true;
         }

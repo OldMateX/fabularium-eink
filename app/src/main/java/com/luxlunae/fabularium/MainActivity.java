@@ -347,7 +347,7 @@ public class MainActivity extends AppCompatActivity
 
         mToolbar = findViewById(R.id.my_toolbar);
         setSupportActionBar(mToolbar);
-        mToolbar.setPopupTheme(R.style.Theme_Fabularium_Popup);   
+        mToolbar.setPopupTheme(R.style.ThemeOverlay_Fabularium_Popup);   
 
         PreferenceManager.setDefaultValues(this, R.xml.preferences, false);
     }   
