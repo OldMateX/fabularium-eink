@@ -9,13 +9,14 @@
  * of the License, or (at your option) any later version.
  *
  * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * but WITHOUT ANY WARRANTY; without even the implied warranty
+ * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
  * along with Fabularium; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
  */
 package com.luxlunae.glk.view.window;
 
@@ -74,13 +75,19 @@ import static com.luxlunae.glk.model.stream.window.GLKWindowM.ModifierFlag.FLAG_
  *  - setComposing(): no longer used (it let the old IME code force input open after a submit,
  *    which caused the repeated "go southgo south..." submissions). Kept, deprecated, as a no-op
  *    in case anything else still calls it.
+ *
+ * SWIPE: fast single-finger fling sends a compass direction + Enter.
+ * TAP: single or double tap on a word inserts it into the input line (no Enter).
+ * LONG PRESS: toggles the system keyboard (show if hidden, hide if shown).
  */
 @SuppressLint("ViewConstructor")
 public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.ScrollChild {
 
     private static final int ID_PASTE = android.R.id.paste;
 
-    // INPUT
+    // ------------------------------------------------------------------
+    // INPUT state
+    // ------------------------------------------------------------------
     @NonNull
     private final Path mHighlightPath = new Path();
     @NonNull
@@ -92,7 +99,9 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
     private ArrayList<Integer> mBufferedInput = new ArrayList<>();
     private boolean mComposing = false;
 
-    // OUTPUT
+    // ------------------------------------------------------------------
+    // OUTPUT state
+    // ------------------------------------------------------------------
     @NonNull
     private SpannableStringBuilder mOutput = new SpannableStringBuilder();
     @Nullable
@@ -102,6 +111,25 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
     private boolean mAcceptingBufferedInput = true;
     @Nullable
     private String mLastFlush;
+
+    // ------------------------------------------------------------------
+    // SWIPE: fast fling sends a compass direction + Enter
+    // ------------------------------------------------------------------
+
+    /** Minimum swipe distance (dp) so slow drags aren't mistaken for commands. */
+    private static final float SWIPE_MIN_DISTANCE_DP = 80f;
+    /** Minimum swipe velocity (dp/s) so slow drags aren't mistaken for commands. */
+    private static final float SWIPE_MIN_VELOCITY_DP = 300f;
+
+    /**
+     * Compass commands by 45-degree sector, anticlockwise from "right":
+     * E, NE, N, NW, W, SW, S, SE.
+     */
+    private static final String[] SWIPE_COMMANDS = {"e", "ne", "n", "nw", "w", "sw", "s", "se"};
+
+    // ------------------------------------------------------------------
+    // Constructor
+    // ------------------------------------------------------------------
 
     public GLKTextBufferV(@NonNull Context c, @NonNull GLKTextBufferM model, @NonNull GLKScreen screen,
                           @Nullable int[] vScrollbarColors, @Nullable int[] hScrollbarColors,
@@ -115,7 +143,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         setScrollChild(this);  // enable scrolling
 
         // Set the scrollbar colors based on input style, unless
-        // overriden by user or config file
+        // overridden by user or config file
         Resources res = screen.getContext().getResources();
         GLKStyleSpan sty = model.mWindowStyles[GLKConstants.style_Input];
         int[] colors = new int[2];
@@ -127,15 +155,14 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         setContentDescription("");
     }
 
+    // ------------------------------------------------------------------
+    // Hyperlink lookup (recursive, handles TableSpan nesting)
+    // ------------------------------------------------------------------
+
     /**
      * Look for a hyperlink in layout "layout" at pixel coordinates (x, y).
      * This may require traversing tablespans which in themselves contain
      * layouts (one for each cell), which may contain further tablespans, etc.
-     *
-     * @param layout - the layout to inspect.
-     * @param x      - x ordinate.
-     * @param y      - y ordinate.
-     * @return NULL if no layout found.
      */
     private static GLKHyperlinkSpan findHyperlink(@NonNull Layout layout, int x, int y) {
         int line = layout.getLineForVertical(y);
@@ -144,23 +171,23 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
 
         GLKHyperlinkSpan[] links = text.getSpans(off, off, GLKHyperlinkSpan.class);
         if (links.length > 0) {
-            // success
             return links[0];
         } else {
-            // if we've got a tablespan, then keep looking
-            // otherwise give up
             TableSpan[] tables = text.getSpans(off, off, TableSpan.class);
             if (tables.length > 0) {
                 Point cellPos = new Point();
                 StaticLayout l = tables[0].getCellForScreenCoords(x, y, cellPos);
                 if (l != null) {
-                    // try again
                     return findHyperlink(l, x - cellPos.x, y - cellPos.y);
                 }
             }
         }
         return null;
     }
+
+    // ------------------------------------------------------------------
+    // sendKey: routes a single key code into the game's input buffer
+    // ------------------------------------------------------------------
 
     @Override
     public int sendKey(int key) {
@@ -172,14 +199,12 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         boolean lineDone = false;
         int len = mModel.mInput.length();
         if (key == GLKConstants.keycode_Delete) {
-            // BACKSPACE: Delete the character to the left of the cursor
+            // BACKSPACE: delete the character to the left of the cursor
             if (len > 0) {
                 mModel.mInput.setLength(--len);
             }
         } else if (super.isTerminator(key)) {
-            // Terminate the current input
-            // Flush the contents of the string builder back out to the byte buffer
-            // that was provided when request_line_event was first called
+            // ENTER (or custom terminator): flush the input buffer to the game
             if (mModel.mInputBB != null) {
                 String input = mModel.mInput.toString();
                 announceForAccessibility(input);
@@ -190,11 +215,8 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             }
             lineDone = true;
         } else {
-            // Append the new character to the buffer
+            // Normal character: append to the input buffer
             if (!mModel.mIs32Bit) {
-                // As this buffer is 8 bit, anything higher than
-                // 255 should be converted into a 0x3F ("?") as
-                // per the GLK spec.
                 mModel.mInput.append(key > 255 ? (char) 0x3F : (char) key);
             } else {
                 if (Character.isValidCodePoint(key)) {
@@ -214,14 +236,13 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         return len;
     }
 
+    // ------------------------------------------------------------------
+    // updateContents: flushes new game output into the display
+    // ------------------------------------------------------------------
+
     @Override
     public void updateContents() {
         if (mSyncBGColor && mModel.isFlagSet(FLAG_BG_COLOR_CHANGED)) {
-            // If this text buffer's parent is the GLKScreen or a GLKPair
-            // that has the GLKScreen as it's parent, and it is the main
-            // window (i.e. below, not above) or sole window (no sibling),
-            // change the screen background color to match this text
-            // buffer's new background color
             GLKPairM pm = mModel.getParent();
             boolean mainTextBuffer = false;
 
@@ -235,11 +256,9 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             }
 
             if (mainTextBuffer) {
-                // change screen background color
                 int bgColor = mModel.getBGColor();
                 mScreen.setBackgroundColor(bgColor);
 
-                // change text grid sibling background color also, if it exists
                 GLKWindowM sibM = mModel.getSibling();
                 if (sibM != null) {
                     GLKWindowV sibV = GLKScreen.getViewForModel(sibM);
@@ -276,8 +295,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         }
 
         // If the text being flushed is interrupting a composing session,
-        // temporarily suspend that composition (we'll re-enable after we have
-        // added the new text)
+        // temporarily suspend that composition
         boolean composing = mComposing;
         if (composing) {
             stopComposing(false);
@@ -300,16 +318,10 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         }
 
         if (y2 - getScrollY() > mHeightLessPadding) {
-            // The appended text does not all fit into the display, so
-            // scroll down until: (1) last line of previous text is first line
-            // in the display; OR (2) last line of appended text is last line of
-            // the display - whichever comes first
             setScrollY(Math.min(y1, y2 - mHeightLessPadding));
         }
 
         if (mModel.lineRequested() || mModel.charRequested()) {
-            // Alert the hosting activity that it should start speaking the
-            // new text if TTS has been enabled.
             mLastFlush = mOutputBuffer.toString().trim();
             mLastFlush = mLastFlush.replaceAll(">\\Z", "What now?");
             if (mLastFlush != null) {
@@ -317,10 +329,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                 if (c instanceof GLKActivity) {
                     ((GLKActivity) c).speakText(mLastFlush);
                 }
-
-                // Also ensure we announce this to users that have accessibility enabled
-                // (e.g. Google TalkBack)
-                //setContentDescription("text buffer " + mModel.getStreamId() + ": " + utterance);
                 announceForAccessibility(mLastFlush);
             }
         }
@@ -339,9 +347,12 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         invalidate();
     }
 
+    // ------------------------------------------------------------------
+    // updateInputState: reacts to line-request start/end from the game
+    // ------------------------------------------------------------------
+
     @Override
     public void updateInputState() {
-        // Get ready for user input, if relevant
         if (mModel.lineRequested()) {
             if (mModel.mLineEventCount != mCurLineEvent) {
                 mCurLineEvent = mModel.mLineEventCount;
@@ -370,10 +381,12 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         }
     }
 
+    // ------------------------------------------------------------------
+    // IME FIX: input buffer accessors used by GLKInputConnection
+    // ------------------------------------------------------------------
+
     /**
      * Get the current contents of the input buffer.
-     *
-     * @return a copy of the input buffer.
      */
     @NonNull
     @Override
@@ -417,7 +430,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             int cp = s.codePointAt(i);
             i += Character.charCount(cp);
             if (!mModel.mIs32Bit) {
-                // 8-bit buffer: anything above 255 becomes "?" as per the GLK spec
                 mModel.mInput.append(cp > 255 ? (char) 0x3F : (char) cp);
             } else if (Character.isValidCodePoint(cp)) {
                 mModel.mInput.appendCodePoint(cp);
@@ -427,6 +439,10 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         scrollToEnd();
         invalidate();
     }
+
+    // ------------------------------------------------------------------
+    // Composing state management
+    // ------------------------------------------------------------------
 
     /**
      * Clear any composing input text currently displayed on-screen.
@@ -445,12 +461,9 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
      * appear at the end of the text.
      */
     private void drawInput() {
-        // Delete old input (if any)
         clearInput();
 
-        // Add the new input (if any)
         if (mComposing) {
-            // If we are still composing the line, draw the current input buffer
             int ilen = mModel.mInput.length();
             if (ilen > 0) {
                 int len = mOutput.length();
@@ -503,9 +516,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             int len = mOutput.length();
             int pos = mOutput.getSpanStart(InputMarker.class);
             if ((pos >= 0 && pos < len) || userTerminated) {
-                // if there is some input - or the input was terminated
-                // by the user (possibly empty) - and we're supposed to
-                // show it, we now move onto the next line
                 mOutput.append('\n');
                 mModel.echoString("\n");
             }
@@ -515,22 +525,23 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         mOutput.removeSpan(InputMarker.class);
     }
 
+    // ------------------------------------------------------------------
+    // Scrolling
+    // ------------------------------------------------------------------
+
     private void scrollToEnd() {
-        // Scroll down to the last line of the displayed text
         if (mLayout != null) {
             int y2 = mLayout.getLineBottom(mLayout.getLineCount() - 1);
             if (y2 - getScrollY() > mHeightLessPadding) {
-                scrollTo(0, Math.max(0, y2 - mHeightLessPadding));    // scroll screen down to text entry
+                scrollTo(0, Math.max(0, y2 - mHeightLessPadding));
             }
         }
     }
 
-    /**
-     * Called when a context menu option for the text view is selected.  Currently
-     * this will be one of {@link android.R.id#paste}.
-     *
-     * @return true if the context menu item action was performed.
-     */
+    // ------------------------------------------------------------------
+    // Clipboard / buffered input
+    // ------------------------------------------------------------------
+
     private boolean onTextContextMenuItem(int id) {
         switch (id) {
             case ID_PASTE:
@@ -540,9 +551,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         return false;
     }
 
-    /**
-     * If this text buffer is accepting line input, paste the clipboard text.
-     */
     private void pasteInput() {
         if (!mComposing) {
             return;
@@ -580,12 +588,10 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         int sz = mBufferedInput.size();
 
         if (sz == 0) {
-            // nothing to do
             return;
         }
 
         if (mBufferedInput.get(0) == '>') {
-            // to support transcripts that start each line with a >
             mBufferedInput.remove(0);
             sz--;
         }
@@ -602,7 +608,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
 
         int n = keysSent[0];
         if (n > 0 && n < sz) {
-            // remember sublist is (from - inclusive, to - exclusive)
             mBufferedInput.subList(0, n).clear();
         } else {
             mBufferedInput.clear();
@@ -612,15 +617,15 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
     }
 
     /**
-     * Make the system keyboard re-read the input line after it was changed outside the
-     * keyboard's own edits.
-     *
-     * IME FIX: now delegates to GLKTextWindowV.restartSystemIme(), which does the same
-     * restartInput() call (posted, and only when the system keyboard is enabled).
+     * IME FIX: delegates to GLKTextWindowV.restartSystemIme().
      */
     private void resetInputConnection() {
         restartSystemIme();
     }
+
+    // ------------------------------------------------------------------
+    // Drawing
+    // ------------------------------------------------------------------
 
     @Override
     protected void onDraw(@NonNull Canvas canvas) {
@@ -636,21 +641,21 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                             getScrollX() + getWidth() - mPaddingRight, getScrollY() + getHeight() - mPaddingBottom);
                     canvas.translate(mPaddingLeft, mPaddingTop + mVOffset);
                     if (mComposing) {
-                        // in line input mode - draw the cursor
                         mLayout.draw(canvas, mHighlightPath, mModel.mHighlightPaint, 0);
                     } else {
-                        // no cursor needed
                         mLayout.draw(canvas);
                     }
                     canvas.restore();
                 }
             } catch (@NonNull IndexOutOfBoundsException | IllegalArgumentException e1) {
-                // Shouldn't get here, but if we do catch and log the exception
-                // rather than letting Android just kill our app
                 GLKLogger.error("Error: Couldn't render text layout: " + e1.getMessage());
             }
         }
     }
+
+    // ------------------------------------------------------------------
+    // TADS hyperlink handling
+    // ------------------------------------------------------------------
 
     private void processTADSLink(@NonNull GLKHyperlinkSpan link) {
         if (!mComposing) {
@@ -672,9 +677,6 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             scrollToEnd();
             stopComposing(false);
 
-            // post the event
-            // val2 will be 0 unless input was ended by a special terminator key, in which case val2 will
-            // be the keycode (one of the values passed to glk_set_terminators_line_event())
             GLKEvent ev = new GLKEvent();
             ev.lineEvent(mModel.getStreamId(), mModel.mInput.length(), 0);
             GLKController.postEvent(ev);
@@ -684,16 +686,14 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         restartSystemIme();
     }
 
-    @Override
-    public void onLongPress(@NonNull MotionEvent e) {
-        // Long-press to show the system keyboard for typing.
-        InputMethodManager imm = (InputMethodManager)
-            getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-        if (imm != null) {
-            imm.showSoftInput(this, InputMethodManager.SHOW_IMPLICIT);
-        }
-    }
+    // ------------------------------------------------------------------
+    // TAP: single-tap or double-tap on a word inserts it into the input
+    // ------------------------------------------------------------------
 
+    /**
+     * Find the word under the touch point and insert it into the input line.
+     * Used by both single-tap (onSingleTapConfirmed) and double-tap (onDoubleTap).
+     */
     private boolean insertWordAt(@NonNull MotionEvent e) {
         if (!mComposing || mLayout == null) return false;
 
@@ -722,14 +722,14 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
     }
 
     /**
-     * Add a tapped / double-tapped word to the input line.
+     * TAP FIX: add a tapped word to the input line.
      *
-     * TAP FIX: adds a space before the word if the line doesn't already end in whitespace,
-     * and ALWAYS a space after it, so tapping "go" then "north" gives "go north " rather than
-     * "gonorth" (the trailing space is harmless to the parser).
+     * Adds a space before the word if the line doesn't already end in whitespace,
+     * and ALWAYS a space after it, so tapping "go" then "north" gives "go north "
+     * rather than "gonorth" (the trailing space is harmless to the parser).
      *
-     * IME FIX: the word goes straight into mModel.mInput, so the system keyboard doesn't know
-     * about it. restartSystemIme() creates a new connection seeded with the full line
+     * IME FIX: the word goes straight into mModel.mInput, so the system keyboard doesn't
+     * know about it. restartSystemIme() creates a new connection seeded with the full line
      * (including the word), so further typing continues after it.
      */
     private void appendTappedWord(@NonNull String word) {
@@ -751,6 +751,67 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         restartSystemIme();
     }
 
+    // ------------------------------------------------------------------
+    // LONG PRESS: toggle the system keyboard
+    // ------------------------------------------------------------------
+
+    @Override
+    public void onLongPress(@NonNull MotionEvent e) {
+        InputMethodManager imm = (InputMethodManager)
+                getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+        if (imm != null) {
+            imm.toggleSoftInput(InputMethodManager.SHOW_IMPLICIT,
+                    InputMethodManager.HIDE_IMPLICIT_ONLY);
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // SWIPE: fast fling sends a compass direction + Enter
+    // ------------------------------------------------------------------
+
+    @Override
+    public boolean onFling(@Nullable MotionEvent e1, @NonNull MotionEvent e2, float velocityX, float velocityY) {
+        if (e1 != null && mComposing) {
+            float density = getResources().getDisplayMetrics().density;
+            float dx = e2.getX() - e1.getX();
+            float dy = e1.getY() - e2.getY();  // screen Y grows downwards; flip so "up" is positive
+            double dist = Math.hypot(dx, dy);
+            double speed = Math.hypot(velocityX, velocityY);
+
+            if (dist >= SWIPE_MIN_DISTANCE_DP * density
+                    && speed >= SWIPE_MIN_VELOCITY_DP * density) {
+                double angle = Math.toDegrees(Math.atan2(dy, dx));  // 0=right, 90=up, ±180=left
+                int sector = ((int) Math.round(angle / 45.0) + 8) % 8;
+                submitSwipeCommand(SWIPE_COMMANDS[sector]);
+                return true;
+            }
+        }
+        return super.onFling(e1, e2, velocityX, velocityY);  // not a command: keep existing behaviour
+    }
+
+    /**
+     * Clear the current input line, send the compass command + Enter via the normal
+     * key router, then resync the system keyboard.
+     */
+    private void submitSwipeCommand(@NonNull String cmd) {
+        GLKActivity act = GLKUtils.getActivityForView(this);
+        if (act == null) {
+            return;
+        }
+        clearInputBuffer();  // a swipe is a whole command; discard anything half-typed
+        int[] codes = new int[cmd.length() + 1];
+        for (int i = 0; i < cmd.length(); i++) {
+            codes[i] = cmd.charAt(i);
+        }
+        codes[cmd.length()] = 10;  // Enter (GLKUtils maps 10 -> keycode_Return)
+        act.sendKeyCodes(this, codes, null);
+        restartSystemIme();
+    }
+
+    // ------------------------------------------------------------------
+    // Tap event handlers (from GestureDetector.OnDoubleTapListener / OnGestureListener)
+    // ------------------------------------------------------------------
+
     @Override
     public boolean onSingleTapUp(@NonNull MotionEvent e) {
         // Always consume. The parent's onSingleTapUp toggles the keyboard,
@@ -762,7 +823,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
     @Override
     public boolean onSingleTapConfirmed(@NonNull MotionEvent arg0) {
         // We need to use onSingleTapConfirmed rather than onSingleTapUp as
-        // we support double tap events (see below).
+        // we support double-tap events (see onDoubleTap below).
         if (mLayout != null) {
             GLKHyperlinkSpan link = findHyperlink(mLayout,
                     (int) arg0.getX() + getScrollX() - mPaddingLeft,
@@ -770,7 +831,7 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
             if (link != null) {
                 int v = link.getVal();
                 if (v != GLKConstants.NULL) {
-                    // generic GLK hyperlink
+                    // Generic GLK hyperlink
                     if (mModel.hyperlinkRequested()) {
                         GLKEvent ev = new GLKEvent();
                         ev.hyperlinkEvent(mModel.getStreamId(), v);
@@ -780,17 +841,18 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
                     // TADS-style hyperlink
                     GLKTextWindowM win = link.mInputWin;
                     if (win != null && win instanceof GLKTextBufferM) {
-                        // send the link back to be processed on the view side of the provided window model
                         GLKTextBufferV winV = (GLKTextBufferV) GLKScreen.getViewForModel(win);
                         if (winV != null) {
                             winV.processTADSLink(link);
                         }
                     } else {
-                        GLKLogger.error("GLKTextBuffer: Could not process TADS hyperlink '" + link.getUrl() + "' as the attached window was invalid.");
+                        GLKLogger.error("GLKTextBuffer: Could not process TADS hyperlink '" + link.getUrl()
+                                + "' as the attached window was invalid.");
                     }
                 }
                 return true;
             } else {
+                // No hyperlink: try to insert the tapped word into the input line
                 if (insertWordAt(arg0)) {
                     return true;
                 }
@@ -804,56 +866,13 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
 
     @Override
     public boolean onDoubleTap(@NonNull MotionEvent e) {
-        // If this window is composing, detect the word (if any) the
-        // user has double-tapped and add it to the composing text
-        if (mComposing && mLayout != null) {
-            // Get the character offset closest to the event's (x, y) position
-            float x = e.getX() + getScrollX() - mPaddingLeft;
-            float y = e.getY() + getScrollY() - mPaddingTop - mVOffset;
-            int line = mLayout.getLineForVertical((int) y);
-            int offset = mLayout.getOffsetForHorizontal(line, (int) x);
-
-            // Now work out what word this is
-            int i1, i2;
-            CharSequence txt = mLayout.getText();
-            for (i1 = offset - 1; i1 >= 0; i1--) {
-                if (!Character.isLetterOrDigit(txt.charAt(i1))) {
-                    i1++;
-                    break;
-                }
-            }
-            i1 = Math.max(i1, 0);
-            int sz;
-            for (i2 = offset + 1, sz = txt.length(); i2 < sz; i2++) {
-                if (!Character.isLetterOrDigit(txt.charAt(i2))) {
-                    break;
-                }
-            }
-            i2 = Math.min(i2, sz - 1);
-
-            int len = i2 - i1;
-            if (len > 0 && len <= 200) {
-                // To avoid overloading the input buffer, We only add the word
-                // if it has a least one character and no more than 200 characters
-                // According to https://en.wikipedia.org/wiki/Longest_word_in_English,
-                // the longest English word to appear in a major dictionary was 45
-                // chars long. According to http://www.bbc.com/news/world-europe-22762040
-                // the longest German word (until 2013) was 63 chars long. The longest
-                // word in any language - as far as Wikipedia has found - is in Sanskrit
-                // (see https://en.wikipedia.org/wiki/Longest_words). It is 195 chars long.
-                // So we should be safe with our 200 char limit. And in the worst case
-                // scenario, if a user does find a word above that limit, all it means is
-                // that the user won't be able to double-tap it and will have to type
-                // the old-fashioned way (as painful as that would be).
-                String word = txt.subSequence(i1, i2).toString().trim();
-                // TAP FIX: shared with single-tap; adds the word plus a trailing space and
-                // resyncs the system keyboard.
-                appendTappedWord(word);
-            }
-            return true;
-        }
-        return false;
+        // Double-tap: same as single-tap — insert the word under the finger
+        return insertWordAt(e);
     }
+
+    // ------------------------------------------------------------------
+    // HVScrollView.ScrollChild interface
+    // ------------------------------------------------------------------
 
     @Override
     public int getChildWidth() {
@@ -865,6 +884,10 @@ public class GLKTextBufferV extends GLKTextWindowV implements HVScrollView.Scrol
         return (mLayout != null) ? mLayout.getHeight() : 0;
     }
 
+    // ------------------------------------------------------------------
+    // Inner marker class (used as a span to track the input cursor position)
+    // ------------------------------------------------------------------
+
     private static class InputMarker {
     }
-}
+}   
